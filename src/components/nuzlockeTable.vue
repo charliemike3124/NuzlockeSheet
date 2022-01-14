@@ -43,6 +43,9 @@
     }),
 
     methods: {      
+      editItem (item){
+
+      },
       deleteItem (item) {
         const editedIndex = this.tableData.rows.indexOf(item);   
         this.tableData.rows.splice(editedIndex, 1);
