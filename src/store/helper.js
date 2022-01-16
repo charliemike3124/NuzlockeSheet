@@ -80,6 +80,7 @@ const MutationsHelper = {
 
   // remove item from list
   omitFromList: (key) => (state, item) => {
+    debugger
     const index = state[key].indexOf(item);
     if (index > -1) {
       state[key].splice(index, 1);
