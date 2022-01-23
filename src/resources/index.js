@@ -1,6 +1,4 @@
-import PokemonGens from "./pokemonGens";
-import SnackbarAlerts from "./snackbarAlerts";
-export {
-    PokemonGens,
-    SnackbarAlerts,
-}
+import PokemonGens from "./constants/pokemonGens";
+import SnackbarAlerts from "./constants/snackbarAlerts";
+import Constants from "./constants/generalConstants";
+export { PokemonGens, SnackbarAlerts, Constants };

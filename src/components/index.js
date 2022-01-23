@@ -1,5 +1,4 @@
-import NuzlockeTable from './nuzlockeTable'
+import NuzlockeTable from "./nuzlockeTable";
+import PlayersTable from "./playersTable";
 
-export {
-    NuzlockeTable
-}
+export { NuzlockeTable, PlayersTable };
