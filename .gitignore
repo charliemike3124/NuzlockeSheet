@@ -2,6 +2,7 @@
 node_modules
 /dist
 firebase.secret.js
+.firebase
 
 
 # local env files
