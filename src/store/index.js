@@ -1,24 +1,20 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+import Vue from "vue";
+import Vuex from "vuex";
 import VuexPersist from "vuex-persist";
-import {
-  nuzlocke,
-  pokemon
-} from "./modules";
-
+import { nuzlocke, pokemon, sheets } from "./modules";
 
 const vuexLocalStorage = new VuexPersist({
-  storage: window.localStorage,
-  reducer: (state) => ({
-  }),
+    storage: window.localStorage,
+    reducer: (state) => ({}),
 });
 
-Vue.use(Vuex)
+Vue.use(Vuex);
 
-export default new Vuex.Store({  
-  plugins: [vuexLocalStorage.plugin],
-  modules: {
-    nuzlocke,
-    pokemon,
-  }
-})
+export default new Vuex.Store({
+    plugins: [vuexLocalStorage.plugin],
+    modules: {
+        nuzlocke,
+        pokemon,
+        sheets,
+    },
+});

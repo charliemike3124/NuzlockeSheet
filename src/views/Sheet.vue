@@ -1,5 +1,5 @@
 <template>
-    <div class="grey lighten-5">
+    <div class="main-sheet-cont grey lighten-5">
         <v-toolbar dense color="primary" class="white--text">
             <v-menu bottom left>
                 <template v-slot:activator="{ on, attrs }">
@@ -9,12 +9,6 @@
                 </template>
 
                 <v-list>
-                    <v-list-item class="pointer" @click="onManagePlayersClick">
-                        <v-list-item-title>
-                            <i class="mdi mdi-account"></i>
-                            Manage players
-                        </v-list-item-title>
-                    </v-list-item>
                     <v-list-item class="pointer" @click="onShareSheetClick">
                         <v-list-item-title>
                             <i class="mdi mdi-share"></i>
@@ -35,8 +29,10 @@
         </v-toolbar>
         <div class="table-cont mb-12">
             <NuzlockeTable
+                ref="nuzlockeTable"
                 :data="sheetData"
                 @showSnackbar="showSnackbar"
+                @managePlayers="onManagePlayersClick"
             ></NuzlockeTable>
         </div>
 
@@ -89,6 +85,7 @@
 
 <script>
 import { NuzlockeTable, PlayersTable } from "@/components";
+import { PokemonGens } from "@/resources";
 import { mapActions, mapState } from "vuex";
 
 export default {
@@ -100,7 +97,12 @@ export default {
     },
 
     computed: {
-        ...mapState("nuzlocke", ["sheetData", "sheetDataList"]),
+        ...mapState("nuzlocke", [
+            "sheetData",
+            "sheetDataList",
+            "selectedSheet",
+        ]),
+        ...mapState("sheets", ["currentUser"]),
     },
 
     data: () => ({
@@ -119,9 +121,9 @@ export default {
     methods: {
         ...mapActions("nuzlocke", [
             "SetSheetData",
-            "GetSheetData",
-            "InitializeSheetDataList",
+            "JoinSheet",
             "SetPlayers",
+            "GetSelectedSheet",
         ]),
         ...mapActions("pokemon", ["SetPokemonListAsync"]),
         showDialog(title) {
@@ -148,15 +150,23 @@ export default {
             this.SetPlayers(this.$refs.playersTable.players);
             this.closeDialog();
         },
-        onExitSheetClick() {},
+        onExitSheetClick() {
+            this.$router.push({ name: "Home" });
+        },
     },
-    async created() {
-        console.log(this.$route.params);
-        this.SetPokemonListAsync();
-        const dataExists = await this.GetSheetData();
-        if (!dataExists) {
-            await this.InitializeSheetDataList(["Test Title", []]); //TODO - get these params from welcome page
+    async mounted() {
+        this.$refs.nuzlockeTable.loadingData = true;
+        this.GetSelectedSheet();
+        await this.SetPokemonListAsync();
+        if (!this.sheetDataList.code) {
+            const dataExists = await this.JoinSheet(this.$route.params.code);
+            if (!dataExists) {
+                this.$router.push({ name: "Home" });
+            }
         }
+        this.$refs.nuzlockeTable.selectedGame =
+            PokemonGens.names[this.selectedSheet];
+        this.$refs.nuzlockeTable.loadingData = false;
     },
 };
 </script>

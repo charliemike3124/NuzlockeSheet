@@ -1,6 +1,4 @@
 import nuzlocke from "./nuzlockeModule";
-import pokemon from "./pokemonModule"
-export { 
-    nuzlocke,
-    pokemon,
-};
+import pokemon from "./pokemonModule";
+import sheets from "./sheetsModule";
+export { nuzlocke, pokemon, sheets };

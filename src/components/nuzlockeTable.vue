@@ -72,6 +72,7 @@
             v-slot:[`item.${prop.value}`]="{ item }"
         >
             <v-autocomplete
+                ref="autoComplete"
                 class="autocomplete"
                 :items="pokemonList"
                 :value="getSelectedPokemon(item[`${prop.value}`])"
@@ -161,7 +162,7 @@ export default {
     props: {
         data: {
             required: true,
-            default: {},
+            default: () => {},
         },
     },
     computed: {
@@ -190,6 +191,13 @@ export default {
                 toggleColor: "",
                 eventHandler: "resetSheet",
             },
+            {
+                name: "managePlayers",
+                icon: "mdi-account-plus",
+                tooltip: "Manage Players",
+                toggleColor: "",
+                eventHandler: "managePlayers",
+            },
         ],
         tableActions: [
             {
@@ -209,8 +217,8 @@ export default {
                 actionParams: [Constants.ROW_STATUS.DEAD],
                 className: (item) =>
                     item.rowStatus === Constants.ROW_STATUS.DEAD
-                        ? "mr-6 icon-active"
-                        : "mr-6",
+                        ? "icon-active"
+                        : "",
             },
             {
                 tooltip: "Add row below",
@@ -267,27 +275,46 @@ export default {
         async onSelectGame() {
             this.SetSheetGame(this.selectedGame);
         },
+        //-- Opens a new tab to bulbapedia with the pokemon's data
         showPokemonData(item) {
             window.open(`${this.bulbapediaBaseURL}/${item.name}`, "_blank");
         },
+        //-- Saves the sheet to firebase and updates other players on any changes.
         saveSheet() {
             this.SaveSheetData();
             this.$emit("showSnackbar", SnackbarAlerts.sheetSaved);
         },
+        //-- Resets the whole sheet to its original state.
         resetSheet() {
             //TODO - show confirmation dialog and add reset logic (only erases player pokemon)
             this.ResetCurrentSheet();
         },
+        //-- Called when selecting a pokemon from the autocomplete
         async onPokemonSelect(name, prop, row) {
-            let pokemon = await this.UpdatePokemonListByNameAsync(name);
+            let pokemon;
+            if (name) {
+                pokemon = await this.UpdatePokemonListByNameAsync(name);
+            }
             let sheetData = JSON.parse(JSON.stringify(this.data));
             const index = this.data.rows.indexOf(row);
             sheetData.rows[index][prop] = pokemon;
             this.SetSheetData(sheetData);
         },
+        //-- Returns all the pokemon data by name, used in the template.
         getSelectedPokemon(pokemon) {
             return this.pokemonList.find((pok) => pok.name === pokemon?.name);
         },
+        //-- Opens players management popup
+        managePlayers() {
+            this.$emit("managePlayers");
+        },
+    },
+    mounted() {
+        //-- Set all input's google autofill to false.
+        for (const ref of this.$refs.autoComplete) {
+            let input = ref.$el.querySelector("input");
+            input.autocomplete = false;
+        }
     },
 };
 </script>

@@ -1,0 +1,40 @@
+.main-cont {
+    height: 100vh;
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 40px;
+    @media screen and (max-width: 600px) {
+        padding-top: 0px;
+        .title-img-cont {
+            img {
+                width: 300px;
+            }
+        }
+    }
+    .card {
+        width: 300px;
+        margin-top: 20px;
+        .card-title {
+            text-align: center;
+        }
+        .card-body {
+            text-align: center;
+            > div > div {
+                margin-top: 15px;
+            }
+        }
+    }
+}
+
+.profile-pic {
+    img {
+        border-radius: 50%;
+        border: 3px solid #fafafa;
+        width: 70px;
+    }
+    span {
+        font-size: 0.8rem;
+    }
+}

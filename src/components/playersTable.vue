@@ -1,21 +1,29 @@
 <template>
     <div>
         <div class="mt-3">
-            <v-row>
-                <v-col>
-                    <v-text-field
-                        v-model="addedPlayerName"
-                        class="ma-0"
-                        :class="addPlayerInputClass"
-                        label="Add a Player"
-                        outlined
-                        hide-details
-                        :append-outer-icon="'mdi-account-plus'"
-                        @click:append-outer="addPlayer"
-                        @keydown.prevent.enter="addPlayer"
-                    ></v-text-field>
-                </v-col>
-            </v-row>
+            <span class="font-weight-bold">Add a Player</span>
+        </div>
+        <div class="mt-3 player-form">
+            <v-form>
+                <v-text-field
+                    v-model="addedPlayerName"
+                    class="mt-1"
+                    :class="addPlayerInputClass"
+                    label="Player Name *"
+                    outlined
+                    hide-details
+                    @keydown.prevent.enter="addPlayer"
+                ></v-text-field>
+                <v-text-field
+                    v-model="addedPlayerName"
+                    class="mt-1"
+                    :class="addPlayerInputClass"
+                    label="Email *"
+                    outlined
+                    hide-details
+                    @keydown.prevent.enter="addPlayer"
+                ></v-text-field>
+            </v-form>
         </div>
 
         <div class="mx-6 my-2">
@@ -123,9 +131,11 @@ export default {
         },
     },
     mounted() {
-        this.players = this.sheetDataList.players;
+        this.players = this.sheetDataList?.players || [];
     },
 };
 </script>
 
-<style></style>
+<style lang="less">
+@import (less) "../styles/components/playersTable.less";
+</style>

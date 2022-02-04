@@ -1,9 +1,12 @@
-// import Firebase from '@/firebase.config';
+import { App } from "@/firebase.config";
+import { logEvent, getAnalytics } from "firebase/analytics";
 
-// const Events = {
-//     CustomEvent(eventName){
-//         Firebase.Analytics.logEvent(eventName, { EventType: "Custom Event"});
-//     }
-// };
+const analytics = getAnalytics(App);
 
-// export default {Events};
+function LogCustomEvent(eventName, params) {
+    logEvent(analytics, eventName, params);
+}
+
+export default {
+    LogCustomEvent,
+};

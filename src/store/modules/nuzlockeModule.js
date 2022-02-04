@@ -1,5 +1,7 @@
 import { MutationsHelper } from "@/store/helper";
 import { PokemonGens } from "@/resources";
+import Database from "@/services/FirebaseDatabase";
+import FirebaseAuth from "@/services/FirebaseAuth";
 
 const state = {
     sheetData: {
@@ -8,24 +10,26 @@ const state = {
     },
     sheetDataList: {
         title: "",
-        selectedSheet: 0,
         players: [],
         dataSheets: [],
+        code: null,
     },
     selectedGame: "",
+    selectedSheet: 0,
 };
 
 const mutations = {
     setSheetData: MutationsHelper.set("sheetData"),
     setSheetDataList: MutationsHelper.set("sheetDataList"),
     setSheetGame: MutationsHelper.set("selectedGame"),
+    setSelectedSheet: MutationsHelper.set("selectedSheet"),
 };
 
 const actions = {
     SetPlayers({ commit, state, dispatch }, players) {
         //Add player props to every sheet's header in the list.
         let sheetDataList = state.sheetDataList;
-        sheetDataList.dataSheets[sheetDataList.selectedSheet] = state.sheetData;
+        sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
         sheetDataList.players = players;
         sheetDataList.dataSheets.map((sheet) => {
             const locationHeader = sheet.headers[0];
@@ -60,46 +64,37 @@ const actions = {
             sheet.headers = headers;
         });
 
-        dispatch(
-            "SetSheetData",
-            sheetDataList.dataSheets[sheetDataList.selectedSheet]
-        );
+        dispatch("SetSheetData", sheetDataList.dataSheets[state.selectedSheet]);
         commit("setSheetDataList", sheetDataList);
     },
     SetSheetGame({ commit, state, dispatch }, game) {
         commit("setSheetGame", game);
         const index = PokemonGens.names.indexOf(game);
+        localStorage.setItem(storageKeys.selectedSheet, index);
+        commit("setSelectedSheet", game);
 
         let sheetDataList = state.sheetDataList;
-        sheetDataList.dataSheets[sheetDataList.selectedSheet] = state.sheetData;
-        sheetDataList.selectedSheet = index;
+        sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
 
         let selectedSheetData = state.sheetDataList.dataSheets[index];
 
         dispatch("SetSheetData", selectedSheetData);
-        commit("setSheetDataList", sheetDataList);
+        commit("setSelectedSheet", sheetDataList);
+    },
+    GetSelectedSheet({ commit }) {
+        const data = localStorage.getItem(storageKeys.selectedSheet);
+        const selectedSheet = data ? JSON.parse(data) : 0;
+        commit("setSelectedSheet", selectedSheet);
     },
 
     SetSheetData({ commit }, sheetData) {
         commit("setSheetData", sheetData);
     },
-    GetSheetData({ commit, dispatch }) {
-        const sheetDataList = JSON.parse(
-            localStorage.getItem(storageKeys.sheetDataList)
-        );
-        if (!!sheetDataList) {
-            commit("setSheetDataList", sheetDataList);
-            dispatch(
-                "SetSheetData",
-                sheetDataList.dataSheets[sheetDataList.selectedSheet]
-            );
-        }
-        return !!sheetDataList;
-    },
     SaveSheetData({ state, commit }) {
         //TODO- save to firebase as well
         let sheetDataList = state.sheetDataList;
-        sheetDataList.dataSheets[sheetDataList.selectedSheet] = state.sheetData;
+        sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
+        Database.UpdateSheet(sheetDataList);
         localStorage.setItem(
             storageKeys.sheetDataList,
             JSON.stringify(sheetDataList)
@@ -138,20 +133,21 @@ const actions = {
 
         dispatch("SetSheetData", result);
     },
-    InitializeSheetDataList({ commit, dispatch }, [title, players]) {
+    InitializeSheetDataList({ commit, dispatch }, [title, players, code]) {
         const defaultSelectedSheetIndex = 0;
         let sheetDataList = {
             title: title,
             selectedSheet: defaultSelectedSheetIndex,
             players: players,
             dataSheets: [],
+            code: code,
         };
         let playerHeaders = [];
         players.forEach((player) => {
             playerHeaders.push({
                 text: player.name,
                 value: player.name,
-                sortable: true,
+                sortable: false,
                 isPlayer: true,
             });
         });
@@ -162,6 +158,7 @@ const actions = {
                     {
                         text: "Location",
                         value: "location",
+                        sortable: false,
                     },
                     ...playerHeaders,
                     {
@@ -189,6 +186,46 @@ const actions = {
             sheetDataList.dataSheets[defaultSelectedSheetIndex]
         );
         dispatch("SaveSheetData", sheetDataList);
+        dispatch(
+            "sheets/AddOrRemoveSavedSheet",
+            { code: sheetDataList.code, title: sheetDataList.title },
+            { root: true }
+        );
+    },
+    async JoinSheet({ commit, dispatch, state, rootState }, code) {
+        let sheetDataList;
+        if (!!rootState.sheets.currentUser) {
+            //Subscribe to any changes done to the sheet document in firebase.
+            sheetDataList = await Database.SubscribeToSheet(
+                (dbSheetDataList) => {
+                    if (dbSheetDataList) {
+                        commit("setSheetDataList", dbSheetDataList);
+                        dispatch(
+                            "SetSheetData",
+                            dbSheetDataList.dataSheets[state.selectedSheet]
+                        );
+                    }
+                },
+                code
+            );
+        } else {
+            //Get the sheet data without subscribing to live changes.
+            sheetDataList = await Database.GetSheetByCode(code);
+            commit("setSheetDataList", sheetDataList);
+            dispatch(
+                "SetSheetData",
+                sheetDataList.dataSheets[state.selectedSheet]
+            );
+        }
+        dispatch(
+            "sheets/AddOrRemoveSavedSheet",
+            {
+                code: sheetDataList.code,
+                title: sheetDataList.title,
+            },
+            { root: true }
+        );
+        return !!sheetDataList;
     },
     ResetCurrentSheet({ state, dispatch }) {
         let sheetData = state.sheetData;
@@ -209,6 +246,7 @@ const actions = {
 //-- Not Exported --//
 const storageKeys = {
     sheetDataList: "sheetDataList",
+    selectedSheet: "selectedSheet",
 };
 //-----------------//
 export default {

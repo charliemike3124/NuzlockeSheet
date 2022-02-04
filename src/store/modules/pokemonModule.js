@@ -24,6 +24,13 @@ const actions = {
                     stats: [],
                 };
             });
+            list.unshift({
+                name: "",
+                types: [],
+                id: null,
+                sprite: "",
+                stats: [],
+            });
             localStorage.setItem(storageKeys.pokemonList, JSON.stringify(list));
         }
         commit("setPokemonList", list);

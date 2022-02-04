@@ -43,7 +43,8 @@ html {
 .pointer {
     cursor: pointer;
 }
-// Scrollbar
+
+//-- Scrollbar
 @scrollbar-color: #a6a9ad;
 @scrollbar-size: @spacer * 1.75;
 @scrollbar-background-color: fade(@scrollbar-color, 25%);
@@ -64,4 +65,14 @@ html {
 ::-webkit-scrollbar-thumb:hover {
     background-color: @scrollbar-thumb-hover-background-color;
     border-radius: @scrollbar-size;
+}
+
+//-- Global Vuetify
+.v-input-small {
+    .v-input__slot {
+        min-height: 40px !important;
+        label {
+            top: 12px !important;
+        }
+    }
 }
