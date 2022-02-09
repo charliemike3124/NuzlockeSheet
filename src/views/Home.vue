@@ -8,14 +8,10 @@
                 <v-scroll-x-reverse-transition>
                     <div v-show="cardView === VIEW_MAIN">
                         <div>
-                            <v-btn @click="setCardView(VIEW_CREATE_SHEET)">
-                                Create Sheet
-                            </v-btn>
+                            <v-btn @click="setCardView(VIEW_CREATE_SHEET)">Create Sheet</v-btn>
                         </div>
                         <div>
-                            <v-btn @click="setCardView(VIEW_JOIN_SHEET)">
-                                Join Sheet
-                            </v-btn>
+                            <v-btn @click="setCardView(VIEW_JOIN_SHEET)">Join Sheet</v-btn>
                         </div>
                         <div>
                             <v-btn
@@ -29,13 +25,10 @@
                         </div>
                         <div v-if="currentUser">
                             <div class="profile-pic">
-                                <img
-                                    :src="currentUser.photoURL"
-                                    crossorigin=""
-                                />
+                                <img :src="currentUser.photoURL" crossorigin="" />
                                 <div>
-                                    <span
-                                        >Signed in as:
+                                    <span>
+                                        Signed in as:
                                         <br />
                                         <strong>{{ currentUser.email }}</strong>
                                     </span>
@@ -43,7 +36,7 @@
                             </div>
                         </div>
                         <div class="mt-12">
-                            <strong>Made with ❤ by Charlie - </strong>
+                            <strong>Made with ❤ by Charlie -</strong>
                             <v-btn
                                 icon
                                 href="https://www.linkedin.com/in/cvillalobosgtz/"
@@ -51,11 +44,7 @@
                             >
                                 <v-icon>mdi-linkedin</v-icon>
                             </v-btn>
-                            <v-btn
-                                icon
-                                href="https://github.com/charliemike3124"
-                                target="_blank"
-                            >
+                            <v-btn icon href="https://github.com/charliemike3124" target="_blank">
                                 <v-icon>mdi-github</v-icon>
                             </v-btn>
                         </div>
@@ -63,10 +52,7 @@
                 </v-scroll-x-reverse-transition>
                 <v-scroll-x-reverse-transition>
                     <div v-show="cardView === VIEW_CREATE_SHEET">
-                        <v-form
-                            v-model="createSheetForm.isValid"
-                            ref="createSheetForm"
-                        >
+                        <v-form v-model="createSheetForm.isValid" ref="createSheetForm">
                             <v-text-field
                                 class="v-input-small"
                                 v-model="createSheetForm.name"
@@ -91,19 +77,14 @@
                                 >
                                     Create
                                 </v-btn>
-                                <v-btn @click="setCardView(VIEW_MAIN)">
-                                    Back
-                                </v-btn>
+                                <v-btn @click="setCardView(VIEW_MAIN)">Back</v-btn>
                             </div>
                         </v-form>
                     </div>
                 </v-scroll-x-reverse-transition>
                 <v-scroll-x-reverse-transition>
                     <div v-show="cardView === VIEW_JOIN_SHEET">
-                        <v-form
-                            v-model="joinSheetForm.isValid"
-                            ref="joinSheetForm"
-                        >
+                        <v-form v-model="joinSheetForm.isValid" ref="joinSheetForm">
                             <v-text-field
                                 class="v-input-small"
                                 v-model="joinSheetForm.code"
@@ -122,9 +103,7 @@
                                 >
                                     Join Sheet
                                 </v-btn>
-                                <v-btn @click="setCardView(VIEW_MAIN)">
-                                    Back
-                                </v-btn>
+                                <v-btn @click="setCardView(VIEW_MAIN)">Back</v-btn>
                             </div>
                         </v-form>
                     </div>
@@ -202,11 +181,7 @@ export default {
     }),
 
     methods: {
-        ...mapActions("sheets", [
-            "LoadSavedSheets",
-            "CreateSheetOnDatabase",
-            "SetCurrentUser",
-        ]),
+        ...mapActions("sheets", ["LoadSavedSheets", "CreateSheetOnDatabase", "SetCurrentUser"]),
         ...mapActions("nuzlocke", ["InitializeSheetDataList", "JoinSheet"]),
         async createSheet() {
             this.creatingSheet = true;

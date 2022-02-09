@@ -1,9 +1,4 @@
-export default function User(
-    uid = null,
-    name = null,
-    email = null,
-    photoURL = null
-) {
+export default function User(uid = null, name = null, email = null, photoURL = null) {
     return {
         uid: uid,
         name: name,

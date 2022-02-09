@@ -33,9 +33,7 @@ const actions = {
         sheetDataList.players = players;
         sheetDataList.dataSheets.map((sheet) => {
             const locationHeader = sheet.headers[0];
-            const nonPlayerHeaders = sheet.headers
-                .splice(1)
-                .filter((item) => !item.isPlayer);
+            const nonPlayerHeaders = sheet.headers.splice(1).filter((item) => !item.isPlayer);
             let playerHeaders = [];
 
             players.forEach((player) => {
@@ -55,11 +53,7 @@ const actions = {
                 });
             });
 
-            let headers = [
-                locationHeader,
-                ...playerHeaders,
-                ...nonPlayerHeaders,
-            ];
+            let headers = [locationHeader, ...playerHeaders, ...nonPlayerHeaders];
 
             sheet.headers = headers;
         });
@@ -95,10 +89,7 @@ const actions = {
         let sheetDataList = state.sheetDataList;
         sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
         Database.UpdateSheet(sheetDataList);
-        localStorage.setItem(
-            storageKeys.sheetDataList,
-            JSON.stringify(sheetDataList)
-        );
+        localStorage.setItem(storageKeys.sheetDataList, JSON.stringify(sheetDataList));
         commit("setSheetDataList", sheetDataList);
     },
     RemoveSheetDataItem({ dispatch, state }, item) {
@@ -181,10 +172,7 @@ const actions = {
         });
 
         commit("setSheetDataList", sheetDataList);
-        dispatch(
-            "SetSheetData",
-            sheetDataList.dataSheets[defaultSelectedSheetIndex]
-        );
+        dispatch("SetSheetData", sheetDataList.dataSheets[defaultSelectedSheetIndex]);
         dispatch("SaveSheetData", sheetDataList);
         dispatch(
             "sheets/AddOrRemoveSavedSheet",
@@ -196,26 +184,17 @@ const actions = {
         let sheetDataList;
         if (!!rootState.sheets.currentUser) {
             //Subscribe to any changes done to the sheet document in firebase.
-            sheetDataList = await Database.SubscribeToSheet(
-                (dbSheetDataList) => {
-                    if (dbSheetDataList) {
-                        commit("setSheetDataList", dbSheetDataList);
-                        dispatch(
-                            "SetSheetData",
-                            dbSheetDataList.dataSheets[state.selectedSheet]
-                        );
-                    }
-                },
-                code
-            );
+            sheetDataList = await Database.SubscribeToSheet((dbSheetDataList) => {
+                if (dbSheetDataList) {
+                    commit("setSheetDataList", dbSheetDataList);
+                    dispatch("SetSheetData", dbSheetDataList.dataSheets[state.selectedSheet]);
+                }
+            }, code);
         } else {
             //Get the sheet data without subscribing to live changes.
             sheetDataList = await Database.GetSheetByCode(code);
             commit("setSheetDataList", sheetDataList);
-            dispatch(
-                "SetSheetData",
-                sheetDataList.dataSheets[state.selectedSheet]
-            );
+            dispatch("SetSheetData", sheetDataList.dataSheets[state.selectedSheet]);
         }
         dispatch(
             "sheets/AddOrRemoveSavedSheet",

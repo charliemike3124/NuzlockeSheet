@@ -23,9 +23,7 @@
                     </v-list-item>
                 </v-list>
             </v-menu>
-            <v-toolbar-title class="mr-3">{{
-                sheetDataList.title
-            }}</v-toolbar-title>
+            <v-toolbar-title class="mr-3">{{ sheetDataList.title }}</v-toolbar-title>
         </v-toolbar>
         <div class="table-cont mb-12">
             <NuzlockeTable
@@ -45,22 +43,15 @@
 
                 <div class="mx-4">
                     <!--Forced re-render-->
-                    <PlayersTable
-                        v-if="dialog.show"
-                        ref="playersTable"
-                    ></PlayersTable>
+                    <PlayersTable v-if="dialog.show" ref="playersTable"></PlayersTable>
                 </div>
 
                 <v-divider></v-divider>
 
                 <v-card-actions>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" text @click="onSavePlayersClick">
-                        Save
-                    </v-btn>
-                    <v-btn color="black" text @click="dialog.show = false">
-                        Close
-                    </v-btn>
+                    <v-btn color="primary" text @click="onSavePlayersClick">Save</v-btn>
+                    <v-btn color="black" text @click="dialog.show = false">Close</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -69,13 +60,7 @@
         <v-snackbar v-model="snackbar.show">
             {{ snackbar.text }}
             <template v-slot:action="{ attrs }">
-                <v-btn
-                    :color="snackbar.color"
-                    text
-                    v-bind="attrs"
-                    icon
-                    @click="snackbar.show = false"
-                >
+                <v-btn :color="snackbar.color" text v-bind="attrs" icon @click="snackbar.show = false">
                     <v-icon>mdi-close</v-icon>
                 </v-btn>
             </template>
@@ -97,11 +82,7 @@ export default {
     },
 
     computed: {
-        ...mapState("nuzlocke", [
-            "sheetData",
-            "sheetDataList",
-            "selectedSheet",
-        ]),
+        ...mapState("nuzlocke", ["sheetData", "sheetDataList", "selectedSheet"]),
         ...mapState("sheets", ["currentUser"]),
     },
 
@@ -119,12 +100,7 @@ export default {
     }),
 
     methods: {
-        ...mapActions("nuzlocke", [
-            "SetSheetData",
-            "JoinSheet",
-            "SetPlayers",
-            "GetSelectedSheet",
-        ]),
+        ...mapActions("nuzlocke", ["SetSheetData", "JoinSheet", "SetPlayers", "GetSelectedSheet"]),
         ...mapActions("pokemon", ["SetPokemonListAsync"]),
         showDialog(title) {
             this.dialog.show = true;
@@ -164,8 +140,7 @@ export default {
                 this.$router.push({ name: "Home" });
             }
         }
-        this.$refs.nuzlockeTable.selectedGame =
-            PokemonGens.names[this.selectedSheet];
+        this.$refs.nuzlockeTable.selectedGame = PokemonGens.names[this.selectedSheet];
         this.$refs.nuzlockeTable.loadingData = false;
     },
 };
