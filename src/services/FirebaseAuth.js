@@ -42,21 +42,19 @@ async function SignOutAsync() {
 
 //-- Checks for any changes on the user auth status.
 function CheckForSignedInUser(SetCurrentUser) {
-    const auth = getAuth(App);
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            // User is signed in
-            let signedInUser = User(
-                user.uid,
-                user.displayName,
-                user.email,
-                user.photoURL
-            );
-            SetCurrentUser(signedInUser);
-        } else {
-            // User is signed out
-            SetCurrentUser(null);
-        }
+    return new Promise((resolve) => {
+        const auth = getAuth(App);
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in
+                let signedInUser = User(user.uid, user.displayName, user.email, user.photoURL);
+                SetCurrentUser(signedInUser);
+            } else {
+                // User is signed out
+                SetCurrentUser(null);
+            }
+            resolve(!!user);
+        });
     });
 }
 

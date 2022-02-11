@@ -1,7 +1,7 @@
 import { MutationsHelper } from "@/store/helper";
 import { PokemonGens } from "@/resources";
 import Database from "@/services/FirebaseDatabase";
-import FirebaseAuth from "@/services/FirebaseAuth";
+import SavedSheet from "@/resources/models/SavedSheet";
 
 const state = {
     sheetData: {
@@ -12,7 +12,6 @@ const state = {
         title: "",
         players: [],
         dataSheets: [],
-        code: null,
     },
     selectedGame: "",
     selectedSheet: 0,
@@ -84,11 +83,11 @@ const actions = {
     SetSheetData({ commit }, sheetData) {
         commit("setSheetData", sheetData);
     },
-    SaveSheetData({ state, commit }) {
-        //TODO- save to firebase as well
+    SaveSheetData({ state, commit }, documentId) {
+        //-- TODO - handle local sheets only and firebase sheets
         let sheetDataList = state.sheetDataList;
         sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
-        Database.UpdateSheet(sheetDataList);
+        Database.UpdateSheet(sheetDataList, documentId);
         localStorage.setItem(storageKeys.sheetDataList, JSON.stringify(sheetDataList));
         commit("setSheetDataList", sheetDataList);
     },
@@ -124,14 +123,11 @@ const actions = {
 
         dispatch("SetSheetData", result);
     },
-    InitializeSheetDataList({ commit, dispatch }, [title, players, code]) {
-        const defaultSelectedSheetIndex = 0;
+    async InitializeSheetDataList({ commit, dispatch }, [title, players]) {
         let sheetDataList = {
             title: title,
-            selectedSheet: defaultSelectedSheetIndex,
             players: players,
             dataSheets: [],
-            code: code,
         };
         let playerHeaders = [];
         players.forEach((player) => {
@@ -170,17 +166,17 @@ const actions = {
                 });
             });
         });
+        const documentId = await Database.CreateSheet(sheetDataList);
 
         commit("setSheetDataList", sheetDataList);
-        dispatch("SetSheetData", sheetDataList.dataSheets[defaultSelectedSheetIndex]);
+        dispatch("SetSheetData", sheetDataList.dataSheets[0]);
         dispatch("SaveSheetData", sheetDataList);
-        dispatch(
-            "sheets/AddOrRemoveSavedSheet",
-            { code: sheetDataList.code, title: sheetDataList.title },
-            { root: true }
-        );
+        dispatch("sheets/AddOrRemoveSavedSheet", SavedSheet(documentId, sheetDataList.title), {
+            root: true,
+        });
+        return documentId;
     },
-    async JoinSheet({ commit, dispatch, state, rootState }, code) {
+    async JoinSheet({ commit, dispatch, state, rootState }, documentId) {
         let sheetDataList;
         if (!!rootState.sheets.currentUser) {
             //Subscribe to any changes done to the sheet document in firebase.
@@ -189,21 +185,20 @@ const actions = {
                     commit("setSheetDataList", dbSheetDataList);
                     dispatch("SetSheetData", dbSheetDataList.dataSheets[state.selectedSheet]);
                 }
-            }, code);
+            }, documentId);
         } else {
             //Get the sheet data without subscribing to live changes.
-            sheetDataList = await Database.GetSheetByCode(code);
+            sheetDataList = await Database.GetSheetByDocumentId(documentId);
             commit("setSheetDataList", sheetDataList);
             dispatch("SetSheetData", sheetDataList.dataSheets[state.selectedSheet]);
         }
-        dispatch(
-            "sheets/AddOrRemoveSavedSheet",
-            {
-                code: sheetDataList.code,
-                title: sheetDataList.title,
-            },
-            { root: true }
-        );
+
+        if (sheetDataList) {
+            //Save to local storage for user preference
+            dispatch("sheets/AddOrRemoveSavedSheet", SavedSheet(documentId, sheetDataList.title), {
+                root: true,
+            });
+        }
         return !!sheetDataList;
     },
     ResetCurrentSheet({ state, dispatch }) {

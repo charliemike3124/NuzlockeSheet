@@ -27,11 +27,7 @@
                 </v-col>
                 <v-col>
                     <div class="d-flex justify-end">
-                        <div
-                            v-for="(action, index) in topActions"
-                            :key="index"
-                            align-self="end"
-                        >
+                        <div v-for="(action, index) in topActions" :key="index" align-self="end">
                             <v-tooltip bottom>
                                 <template v-slot:activator="{ on, attrs }">
                                     <v-btn
@@ -40,11 +36,7 @@
                                         icon
                                         class="mr-2"
                                         :color="action.toggleColor"
-                                        @click="
-                                            callMethodByName(
-                                                action.eventHandler
-                                            )
-                                        "
+                                        @click="callMethodByName(action.eventHandler)"
                                     >
                                         <v-icon>{{ action.icon }}</v-icon>
                                     </v-btn>
@@ -65,12 +57,9 @@
             >
                 {{ item.location.name }}
             </a>
-            <span v-else> {{ item.location.name }} </span>
+            <span v-else>{{ item.location.name }}</span>
         </template>
-        <template
-            v-for="prop in playerHeaders"
-            v-slot:[`item.${prop.value}`]="{ item }"
-        >
+        <template v-for="prop in playerHeaders" v-slot:[`item.${prop.value}`]="{ item }">
             <v-autocomplete
                 ref="autoComplete"
                 class="autocomplete"
@@ -82,31 +71,19 @@
                 @change="onPokemonSelect($event, prop.value, item)"
             >
                 <template v-slot:selection="data">
-                    <div
-                        v-if="!!item[`${prop.value}`]"
-                        class="pokemon-row d-inline-block"
-                    >
+                    <div v-if="!!item[`${prop.value}`]" class="pokemon-row d-inline-block">
                         <img :src="item[`${prop.value}`].sprite" />
                     </div>
                     <div class="d-inline-block">
                         <span v-bind="data.attrs">
                             {{ data.item.name }}
-                            {{
-                                data.item.nickname
-                                    ? `(${data.item.nickname})`
-                                    : ""
-                            }}
+                            {{ data.item.nickname ? `(${data.item.nickname})` : "" }}
                         </span>
                         <div v-if="!!item[`${prop.value}`]">
                             <img
-                                v-for="(type, index) in item[`${prop.value}`]
-                                    .types"
+                                v-for="(type, index) in item[`${prop.value}`].types"
                                 :key="index"
-                                :src="
-                                    requireImage(
-                                        `types_icons/${type.type.name}.png`
-                                    )
-                                "
+                                :src="requireImage(`types_icons/${type.type.name}.png`)"
                             />
                         </div>
                     </div>
@@ -115,30 +92,15 @@
         </template>
 
         <template v-slot:item.actions="{ item }">
-            <v-tooltip
-                bottom
-                v-for="(action, index) in tableActions"
-                :key="index"
-            >
+            <v-tooltip bottom v-for="(action, index) in tableActions" :key="index">
                 <template v-slot:activator="{ on, attrs }">
                     <v-icon
-                        :class="
-                            !!action.className ? action.className(item) : ''
-                        "
-                        :disabled="
-                            !!action.disabled
-                                ? action.disabled(data, item)
-                                : false
-                        "
+                        :class="!!action.className ? action.className(item) : ''"
+                        :disabled="!!action.disabled ? action.disabled(data, item) : false"
                         v-bind="attrs"
                         v-on="on"
                         small
-                        @click="
-                            callMethodByName(action.action, [
-                                item,
-                                ...action.actionParams,
-                            ])
-                        "
+                        @click="callMethodByName(action.action, [item, ...action.actionParams])"
                     >
                         {{ action.icon }}
                     </v-icon>
@@ -206,9 +168,7 @@ export default {
                 action: "setRowStatus",
                 actionParams: [Constants.ROW_STATUS.IN_PARTY],
                 className: (item) =>
-                    item.rowStatus === Constants.ROW_STATUS.IN_PARTY
-                        ? "icon-active"
-                        : "",
+                    item.rowStatus === Constants.ROW_STATUS.IN_PARTY ? "icon-active" : "",
             },
             {
                 tooltip: "Mark as 'Dead'",
@@ -216,9 +176,7 @@ export default {
                 action: "setRowStatus",
                 actionParams: [Constants.ROW_STATUS.DEAD],
                 className: (item) =>
-                    item.rowStatus === Constants.ROW_STATUS.DEAD
-                        ? "icon-active"
-                        : "",
+                    item.rowStatus === Constants.ROW_STATUS.DEAD ? "icon-active" : "",
             },
             {
                 tooltip: "Add row below",
@@ -246,10 +204,7 @@ export default {
             "SaveSheetData",
             "ResetCurrentSheet",
         ]),
-        ...mapActions("pokemon", [
-            "GetPokemonDataAsync",
-            "UpdatePokemonListByNameAsync",
-        ]),
+        ...mapActions("pokemon", ["GetPokemonDataAsync", "UpdatePokemonListByNameAsync"]),
         itemClass(item) {
             let className =
                 item?.rowStatus === Constants.ROW_STATUS.DEAD
@@ -299,6 +254,7 @@ export default {
             const index = this.data.rows.indexOf(row);
             sheetData.rows[index][prop] = pokemon;
             this.SetSheetData(sheetData);
+            this.SaveSheetData(this.$route.params.code);
         },
         //-- Returns all the pokemon data by name, used in the template.
         getSelectedPokemon(pokemon) {
@@ -309,12 +265,16 @@ export default {
             this.$emit("managePlayers");
         },
     },
-    mounted() {
-        //-- Set all input's google autofill to false.
-        for (const ref of this.$refs.autoComplete) {
-            let input = ref.$el.querySelector("input");
-            input.autocomplete = false;
-        }
+    watch: {
+        loadingData(val) {
+            //-- Called when data finishes loading.
+            if (!val && !!this.$refs?.autoComplete?.length) {
+                for (const ref of this.$refs.autoComplete) {
+                    let input = ref?.$el.querySelector("input");
+                    input.autocomplete = false;
+                }
+            }
+        },
     },
 };
 </script>
@@ -324,8 +284,6 @@ export default {
     &::before {
         border-color: transparent !important;
     }
-}
-.autocomplete {
 }
 .pokemon-row {
     padding: 5px 0;

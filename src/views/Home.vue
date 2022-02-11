@@ -93,7 +93,6 @@
                                 :rules="joinSheetForm.codeRules"
                                 required
                                 :error="joinSheetForm.error"
-                                @input="codeInputHandler"
                             ></v-text-field>
                             <div class="d-flex justify-space-between">
                                 <v-btn
@@ -131,15 +130,11 @@
 
 <script>
 import FirebaseAuth from "@/services/FirebaseAuth";
-import stringUtils from "@/resources/utils/stringUtils";
 import { mapState, mapActions } from "vuex";
 import User from "../resources/models/User";
 
 export default {
     name: "Home",
-    mixins: [],
-    components: {},
-
     computed: {
         ...mapState("sheets", ["savedSheets", "currentUser"]),
     },
@@ -163,10 +158,7 @@ export default {
         joinSheetForm: {
             isValid: false,
             code: "",
-            codeRules: [
-                (v) => !!v || "Enter a Code!",
-                (v) => v.length === 7 || "Code is too short!",
-            ],
+            codeRules: [(v) => !!v || "Enter a Code!"],
             error: false,
             JOIN_TRY_DELAY: 3000,
         },
@@ -181,12 +173,12 @@ export default {
     }),
 
     methods: {
-        ...mapActions("sheets", ["LoadSavedSheets", "CreateSheetOnDatabase", "SetCurrentUser"]),
+        ...mapActions("sheets", ["LoadSavedSheets", "SetCurrentUser"]),
         ...mapActions("nuzlocke", ["InitializeSheetDataList", "JoinSheet"]),
+        //-- Creates a sheet in firebase , sets vuex sheet state and pushes to Sheet view.
         async createSheet() {
             this.creatingSheet = true;
-            const code = stringUtils.generateRandomString(7).toUpperCase();
-            await this.InitializeSheetDataList([
+            const documentId = await this.InitializeSheetDataList([
                 this.createSheetForm.title,
                 [
                     User(
@@ -196,18 +188,17 @@ export default {
                         this.currentUser?.photoUrl
                     ),
                 ],
-                code,
             ]);
-            await this.CreateSheetOnDatabase();
             this.$router.push({
                 name: "Sheet",
-                params: { code: code },
+                params: { code: documentId },
             });
         },
+        //-- If user is signed in, attempts to Subscribe to that document (onSnapshot), otherwise only gets the data once.
         async joinSheet() {
             this.joiningSheet = true;
-            const success = await this.JoinSheet(this.joinSheetForm.code);
-            if (success) {
+            const sheetExists = await this.JoinSheet(this.joinSheetForm.code);
+            if (sheetExists) {
                 this.$router.push({
                     name: "Sheet",
                     params: { code: this.joinSheetForm.code },
@@ -222,6 +213,7 @@ export default {
             }
             this.joiningSheet = false;
         },
+        //-- Shows google sign in popup if there is no user currently signed in, signs off otherwise.
         async onSignInOrOffBtn(fromJoinSheetBtn = false) {
             this.isSigningIn = true;
             if (!this.currentUser) {
@@ -240,6 +232,7 @@ export default {
             }
             this.isSigningIn = false;
         },
+        //-- Handles main card view transitions depending on user's action.
         setCardView(view) {
             if (view === this.VIEW_JOIN_SHEET && !this.currentUser) {
                 this.onSignInOrOffBtn(true);
@@ -248,15 +241,6 @@ export default {
                 setTimeout(() => {
                     this.cardView = view;
                 }, 300);
-            }
-        },
-        codeInputHandler(input) {
-            this.joinSheetForm.code = input.toUpperCase();
-            if (input.length > 7) {
-                const substring = input.substring(0, 7);
-                this.$nextTick(() => {
-                    this.joinSheetForm.code = substring;
-                });
             }
         },
     },

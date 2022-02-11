@@ -60,7 +60,13 @@
         <v-snackbar v-model="snackbar.show">
             {{ snackbar.text }}
             <template v-slot:action="{ attrs }">
-                <v-btn :color="snackbar.color" text v-bind="attrs" icon @click="snackbar.show = false">
+                <v-btn
+                    :color="snackbar.color"
+                    text
+                    v-bind="attrs"
+                    icon
+                    @click="snackbar.show = false"
+                >
                     <v-icon>mdi-close</v-icon>
                 </v-btn>
             </template>
@@ -72,6 +78,8 @@
 import { NuzlockeTable, PlayersTable } from "@/components";
 import { PokemonGens } from "@/resources";
 import { mapActions, mapState } from "vuex";
+import FirebaseAuth from "@/services/FirebaseAuth";
+import Database from "@/services/FirebaseDatabase";
 
 export default {
     name: "Home",
@@ -102,6 +110,7 @@ export default {
     methods: {
         ...mapActions("nuzlocke", ["SetSheetData", "JoinSheet", "SetPlayers", "GetSelectedSheet"]),
         ...mapActions("pokemon", ["SetPokemonListAsync"]),
+        ...mapActions("sheets", ["SetCurrentUser"]),
         showDialog(title) {
             this.dialog.show = true;
             this.dialog.title = title;
@@ -115,7 +124,7 @@ export default {
             this.snackbar.color = alert.color;
         },
 
-        //--EVENT-HANDLERS--//
+        //-- Start Event Handlers --//
         onManagePlayersClick() {
             this.showDialog("Manage Players");
         },
@@ -129,12 +138,17 @@ export default {
         onExitSheetClick() {
             this.$router.push({ name: "Home" });
         },
+        //-- End Event Handlers --//
     },
     async mounted() {
         this.$refs.nuzlockeTable.loadingData = true;
         this.GetSelectedSheet();
-        await this.SetPokemonListAsync();
-        if (!this.sheetDataList.code) {
+        await Promise.all([
+            FirebaseAuth.CheckForSignedInUser(this.SetCurrentUser),
+            this.SetPokemonListAsync(),
+        ]);
+        const isSheetInitialized = this.sheetDataList.dataSheets.length;
+        if (!isSheetInitialized) {
             const dataExists = await this.JoinSheet(this.$route.params.code);
             if (!dataExists) {
                 this.$router.push({ name: "Home" });
@@ -142,6 +156,9 @@ export default {
         }
         this.$refs.nuzlockeTable.selectedGame = PokemonGens.names[this.selectedSheet];
         this.$refs.nuzlockeTable.loadingData = false;
+    },
+    beforeDestroy() {
+        Database.UnsubscribeFromSheet();
     },
 };
 </script>

@@ -3,9 +3,7 @@ import {
     getFirestore,
     collection,
     addDoc,
-    query,
-    where,
-    getDocs,
+    getDoc,
     setDoc,
     doc,
     onSnapshot,
@@ -13,47 +11,44 @@ import {
 
 const Database = getFirestore(App);
 const SHEETS_COLLECTION = collection(Database, "Sheets");
+let unsubscribeFromSheet = null;
 
 const SheetService = {
-    //-- Creates a sheet document.
+    //-- Creates a sheet document and returns its id.
     async CreateSheet(sheetData) {
-        return await addDoc(SHEETS_COLLECTION, sheetData);
+        const doc = await addDoc(SHEETS_COLLECTION, sheetData);
+        return doc.id;
     },
     //-- Gets a sheet document that matches the code passed by param.
-    async GetSheetByCode(code) {
-        let sheet;
-        const q = query(SHEETS_COLLECTION, where("code", "==", code));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((document) => {
-            sheet = document.data();
-        });
-        return sheet;
+    async GetSheetByDocumentId(documentId) {
+        const docRef = doc(SHEETS_COLLECTION, documentId);
+        const document = await getDoc(docRef);
+        return document.exists() ? document.data() : null;
     },
     //-- Updates a sheet document that matches the code in sheetData.
-    async UpdateSheet(sheetData) {
-        const q = query(SHEETS_COLLECTION, where("code", "==", sheetData.code));
-        const querySnapshot = await getDocs(q);
-        let docRef = null;
-        querySnapshot.forEach((document) => {
-            docRef = doc(Database, SHEETS_COLLECTION.path, document.id);
-        });
-        if (docRef) {
+    async UpdateSheet(sheetData, documentId) {
+        const docRef = doc(SHEETS_COLLECTION, documentId);
+        const document = await getDoc(docRef);
+        if (document.exists()) {
             await setDoc(docRef, sheetData);
         }
     },
-    //-- Executes "callback" everytime the sheet changes and returns the initial state of the sheet.
-    async SubscribeToSheet(callback, code) {
-        let docRef, sheet;
-        const q = query(SHEETS_COLLECTION, where("code", "==", code));
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((document) => {
-            docRef = doc(Database, SHEETS_COLLECTION.path, document.id);
-            sheet = document.data();
-        });
-        onSnapshot(docRef, (document) => {
-            callback(document.data());
-        });
-        return sheet;
+    //-- Executes "callback" everytime the sheet changes and returns the initial state of the sheet if it exists.
+    async SubscribeToSheet(callback, documentId) {
+        const docRef = doc(SHEETS_COLLECTION, documentId);
+        const document = await getDoc(docRef);
+        if (document.exists()) {
+            unsubscribeFromSheet = onSnapshot(docRef, (document) => {
+                callback(document.data());
+            });
+        }
+        return document.exists() ? document.data() : null;
+    },
+    //-- Unsubscribe from sheet
+    async UnsubscribeFromSheet() {
+        if (!!unsubscribeFromSheet) {
+            unsubscribeFromSheet();
+        }
     },
 };
 
