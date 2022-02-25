@@ -15,7 +15,7 @@
                         </div>
                         <div>
                             <v-btn
-                                @click="onSignInOrOffBtn(false)"
+                                @click="onSignInOrOffBtn(false, authProviders.google)"
                                 :disabled="isSigningIn"
                                 :loading="isSigningIn"
                             >
@@ -131,7 +131,8 @@
 <script>
 import FirebaseAuth from "@/services/FirebaseAuth";
 import { mapState, mapActions } from "vuex";
-import User from "../resources/models/User";
+import { User } from "../resources/models";
+import { Constants } from "../resources/constants";
 
 export default {
     name: "Home",
@@ -170,6 +171,12 @@ export default {
             text: "",
             color: "",
         },
+        authProviders: {
+            google: Constants.AUTH_PROVIDERS.GOOGLE,
+            facebook: Constants.AUTH_PROVIDERS.FACEBOOK,
+            twitter: Constants.AUTH_PROVIDERS.TWITTER,
+            email: Constants.AUTH_PROVIDERS.EMAIL,
+        },
     }),
 
     methods: {
@@ -185,7 +192,7 @@ export default {
                         this.currentUser?.uid,
                         this.createSheetForm.name,
                         this.currentUser?.email,
-                        this.currentUser?.photoUrl
+                        this.currentUser?.photoURL
                     ),
                 ],
             ]);
@@ -198,27 +205,24 @@ export default {
         async joinSheet() {
             this.joiningSheet = true;
             const sheetExists = await this.JoinSheet(this.joinSheetForm.code);
-            if (sheetExists) {
+            if (sheetExists === Constants.JOIN_SHEET_ERRORS.DOES_NOT_EXIST) {
+                this.showSnackbar("There are no sheets with that code!");
+            } else if (sheetExists === Constants.JOIN_SHEET_ERRORS.NO_ACCESS) {
+                this.showSnackbar("You have no access to that sheet.");
+            } else if (!!sheetExists) {
                 this.$router.push({
                     name: "Sheet",
                     params: { code: this.joinSheetForm.code },
                 });
-            } else {
-                this.snackbar.show = true;
-                this.snackbar.text = "No sheets with that code!";
-                this.joinSheetForm.error = true;
-                setTimeout(() => {
-                    this.joinSheetForm.error = false;
-                }, this.joinSheetForm.JOIN_TRY_DELAY);
             }
             this.joiningSheet = false;
         },
         //-- Shows google sign in popup if there is no user currently signed in, signs off otherwise.
-        async onSignInOrOffBtn(fromJoinSheetBtn = false) {
+        async onSignInOrOffBtn(fromJoinSheetBtn = false, authProvider) {
             this.isSigningIn = true;
             if (!this.currentUser) {
                 //Handle Sign In
-                const user = await FirebaseAuth.SignInWithGoogleAsync();
+                const user = await FirebaseAuth.SignInWithPopupAsync(authProvider);
                 if (user) {
                     this.SetCurrentUser(user);
                     if (!!fromJoinSheetBtn) {
@@ -235,13 +239,22 @@ export default {
         //-- Handles main card view transitions depending on user's action.
         setCardView(view) {
             if (view === this.VIEW_JOIN_SHEET && !this.currentUser) {
-                this.onSignInOrOffBtn(true);
+                this.showSnackbar("Sign in first before joining a sheet!");
             } else {
                 this.cardView = "";
                 setTimeout(() => {
                     this.cardView = view;
                 }, 300);
             }
+        },
+        //-- Shows the snackbar with a given message
+        showSnackbar(text) {
+            this.snackbar.show = true;
+            this.snackbar.text = text;
+            this.joinSheetForm.error = true;
+            setTimeout(() => {
+                this.joinSheetForm.error = false;
+            }, this.joinSheetForm.JOIN_TRY_DELAY);
         },
     },
 

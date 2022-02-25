@@ -5,8 +5,7 @@ const GettersHelper = {
     // userById: findByKey('users', 'id')
     // getters.userById('123')
     findByKey(prop, targetKey) {
-        return (state) => (val) =>
-            state[prop].find((x) => x[targetKey] === val);
+        return (state) => (val) => state[prop].find((x) => x[targetKey] === val);
     },
 
     // Filter a list of objects by matching a property value.
@@ -23,8 +22,7 @@ const GettersHelper = {
         const filter = GettersHelper.filterByKey(prop, targetKey);
         return (state) => (vals) =>
             filter(state)(vals).sort(
-                (a, b) =>
-                    vals.indexOf(a[targetKey]) - vals.indexOf(b[targetKey])
+                (a, b) => vals.indexOf(a[targetKey]) - vals.indexOf(b[targetKey])
             );
     },
 };
@@ -82,7 +80,6 @@ const MutationsHelper = {
 
     // remove item from list
     omitFromList: (key) => (state, item) => {
-        debugger;
         const index = state[key].indexOf(item);
         if (index > -1) {
             state[key].splice(index, 1);
@@ -91,9 +88,7 @@ const MutationsHelper = {
 
     // increment the index of a list argument or a list in state
     incrementListIndex: (key, listOrListProp) => (state) => {
-        const list = Array.isArray(listOrListProp)
-            ? listOrListProp
-            : state[listOrListProp];
+        const list = Array.isArray(listOrListProp) ? listOrListProp : state[listOrListProp];
         state[key] = (state[key] + 1) % list.length;
     },
 
@@ -106,11 +101,7 @@ const MutationsHelper = {
             const index = state[key].findIndex((x) => x[idKey] === id);
             return index < 0
                 ? state[key].push(val)
-                : state[key].splice(
-                      index,
-                      1,
-                      Object.assign({}, state[key][index], val)
-                  );
+                : state[key].splice(index, 1, Object.assign({}, state[key][index], val));
         },
 
     // add or replace a record in a list
@@ -120,9 +111,7 @@ const MutationsHelper = {
             const id = data[idKey];
             const val = valKey ? data[valKey] : data;
             const index = state[key].findIndex((x) => x[idKey] === id);
-            return index < 0
-                ? state[key].push(val)
-                : state[key].splice(index, 1, val);
+            return index < 0 ? state[key].push(val) : state[key].splice(index, 1, val);
         },
 
     // Add or remove value

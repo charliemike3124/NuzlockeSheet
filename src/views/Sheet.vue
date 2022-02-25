@@ -24,18 +24,40 @@
                 </v-list>
             </v-menu>
             <v-toolbar-title class="mr-3">{{ sheetDataList.title }}</v-toolbar-title>
+
+            <v-spacer></v-spacer>
+
+            <v-btn v-if="!userIsSignedIn" :loading="isSigningIn" @click="onSignInClick">
+                Sign In
+            </v-btn>
         </v-toolbar>
+        <v-alert
+            v-model="showAlert"
+            color="warning"
+            dark
+            border="top"
+            transition="scale-transition"
+            close-label="okay"
+        >
+            <div class="d-flex align-center">
+                <v-icon class="mr-2">mdi-alert</v-icon>
+                You do not have permission to edit this Sheet.
+                <v-spacer></v-spacer>
+                <v-btn text @click="showAlert = false">Okay</v-btn>
+            </div>
+        </v-alert>
         <div class="table-cont mb-12">
             <NuzlockeTable
                 ref="nuzlockeTable"
                 :data="sheetData"
+                :isCurrentPlayerInvited="isCurrentPlayerInvited"
                 @showSnackbar="showSnackbar"
                 @managePlayers="onManagePlayersClick"
             ></NuzlockeTable>
         </div>
 
         <!-- Modal -->
-        <v-dialog v-model="dialog.show" width="500">
+        <v-dialog v-model="dialog.show" width="600">
             <v-card>
                 <v-card-title class="text-h6 primary">
                     <span class="white--text">{{ dialog.title }}</span>
@@ -76,7 +98,7 @@
 
 <script>
 import { NuzlockeTable, PlayersTable } from "@/components";
-import { PokemonGens } from "@/resources";
+import { PokemonGens, Constants } from "@/resources/constants";
 import { mapActions, mapState } from "vuex";
 import FirebaseAuth from "@/services/FirebaseAuth";
 import Database from "@/services/FirebaseDatabase";
@@ -91,10 +113,18 @@ export default {
 
     computed: {
         ...mapState("nuzlocke", ["sheetData", "sheetDataList", "selectedSheet"]),
-        ...mapState("sheets", ["currentUser"]),
+        ...mapState("sheets", ["currentUser", "currentDocumentId"]),
+        userIsSignedIn() {
+            return this.currentUser?.uid;
+        },
+        isCurrentPlayerInvited() {
+            return !!this.sheetDataList.players.find((p) => p.email === this.currentUser?.email);
+        },
     },
 
     data: () => ({
+        isSigningIn: false,
+        showAlert: false,
         addedPlayerName: "",
         dialog: {
             show: false,
@@ -108,9 +138,9 @@ export default {
     }),
 
     methods: {
-        ...mapActions("nuzlocke", ["SetSheetData", "JoinSheet", "SetPlayers", "GetSelectedSheet"]),
+        ...mapActions("nuzlocke", ["JoinSheet", "SetPlayers", "GetSelectedSheet"]),
         ...mapActions("pokemon", ["SetPokemonListAsync"]),
-        ...mapActions("sheets", ["SetCurrentUser"]),
+        ...mapActions("sheets", ["SetCurrentUser", "SetCurrentDocumentId"]),
         showDialog(title) {
             this.dialog.show = true;
             this.dialog.title = title;
@@ -138,22 +168,40 @@ export default {
         onExitSheetClick() {
             this.$router.push({ name: "Home" });
         },
+        async onSignInClick() {
+            this.isSigningIn = true;
+            const user = await FirebaseAuth.SignInWithPopupAsync(Constants.AUTH_PROVIDERS.GOOGLE);
+            if (user) {
+                this.SetCurrentUser(user);
+                this.$router.go();
+            }
+            this.isSigningIn = false;
+        },
         //-- End Event Handlers --//
+    },
+    watch: {
+        isCurrentPlayerInvited(val) {
+            this.showAlert = !val;
+        },
+    },
+    created() {
+        this.GetSelectedSheet();
+        this.SetCurrentDocumentId(this.$route.params.code);
     },
     async mounted() {
         this.$refs.nuzlockeTable.loadingData = true;
-        this.GetSelectedSheet();
         await Promise.all([
             FirebaseAuth.CheckForSignedInUser(this.SetCurrentUser),
             this.SetPokemonListAsync(),
         ]);
         const isSheetInitialized = this.sheetDataList.dataSheets.length;
         if (!isSheetInitialized) {
-            const dataExists = await this.JoinSheet(this.$route.params.code);
+            const dataExists = await this.JoinSheet(this.currentDocumentId);
             if (!dataExists) {
                 this.$router.push({ name: "Home" });
             }
         }
+        this.showAlert = !this.isCurrentPlayerInvited;
         this.$refs.nuzlockeTable.selectedGame = PokemonGens.names[this.selectedSheet];
         this.$refs.nuzlockeTable.loadingData = false;
     },

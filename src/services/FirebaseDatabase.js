@@ -7,6 +7,7 @@ import {
     setDoc,
     doc,
     onSnapshot,
+    serverTimestamp,
 } from "firebase/firestore";
 
 const Database = getFirestore(App);
@@ -16,6 +17,8 @@ let unsubscribeFromSheet = null;
 const SheetService = {
     //-- Creates a sheet document and returns its id.
     async CreateSheet(sheetData) {
+        sheetData.createdAt = serverTimestamp();
+        sheetData.updatedAt = serverTimestamp();
         const doc = await addDoc(SHEETS_COLLECTION, sheetData);
         return doc.id;
     },
@@ -30,6 +33,7 @@ const SheetService = {
         const docRef = doc(SHEETS_COLLECTION, documentId);
         const document = await getDoc(docRef);
         if (document.exists()) {
+            sheetData.updatedAt = serverTimestamp();
             await setDoc(docRef, sheetData);
         }
     },

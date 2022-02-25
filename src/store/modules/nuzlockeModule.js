@@ -1,18 +1,14 @@
 import { MutationsHelper } from "@/store/helper";
-import { PokemonGens } from "@/resources";
+import { PokemonGens, Constants } from "../../resources/constants";
 import Database from "@/services/FirebaseDatabase";
-import SavedSheet from "@/resources/models/SavedSheet";
+import { SavedSheet, SheetDataList } from "../../resources/models";
 
 const state = {
     sheetData: {
         headers: [],
         rows: [],
     },
-    sheetDataList: {
-        title: "",
-        players: [],
-        dataSheets: [],
-    },
+    sheetDataList: SheetDataList(),
     selectedGame: "",
     selectedSheet: 0,
 };
@@ -25,7 +21,14 @@ const mutations = {
 };
 
 const actions = {
-    SetPlayers({ commit, state, dispatch }, players) {
+    SetSheetData({ commit }, [sheetData, documentId = null]) {
+        commit("setSheetData", sheetData);
+        if (documentId) {
+            //-- Updates Firebase as well.
+            dispatch("SaveSheetData", documentId);
+        }
+    },
+    SetPlayers({ commit, state, dispatch, rootState }, players) {
         //Add player props to every sheet's header in the list.
         let sheetDataList = state.sheetDataList;
         sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
@@ -50,6 +53,7 @@ const actions = {
                     sortable: true,
                     isPlayer: true,
                 });
+                sheetDataList.playerEmails.push(player.email);
             });
 
             let headers = [locationHeader, ...playerHeaders, ...nonPlayerHeaders];
@@ -57,8 +61,9 @@ const actions = {
             sheet.headers = headers;
         });
 
-        dispatch("SetSheetData", sheetDataList.dataSheets[state.selectedSheet]);
+        dispatch("SetSheetData", [sheetDataList.dataSheets[state.selectedSheet]]);
         commit("setSheetDataList", sheetDataList);
+        dispatch("SaveSheetData", rootState.sheets.currentDocumentId);
     },
     SetSheetGame({ commit, state, dispatch }, game) {
         commit("setSheetGame", game);
@@ -71,7 +76,7 @@ const actions = {
 
         let selectedSheetData = state.sheetDataList.dataSheets[index];
 
-        dispatch("SetSheetData", selectedSheetData);
+        dispatch("SetSheetData", [selectedSheetData]);
         commit("setSelectedSheet", sheetDataList);
     },
     GetSelectedSheet({ commit }) {
@@ -80,27 +85,44 @@ const actions = {
         commit("setSelectedSheet", selectedSheet);
     },
 
-    SetSheetData({ commit }, sheetData) {
-        commit("setSheetData", sheetData);
+    SaveSheetData({ state, commit, rootState }, documentId) {
+        if (!!rootState.sheets.currentUser?.uid) {
+            //-- user is signed in
+            let sheetDataList = state.sheetDataList;
+            sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
+            Database.UpdateSheet(sheetDataList, documentId);
+            localStorage.setItem(storageKeys.sheetDataList, JSON.stringify(sheetDataList));
+            commit("setSheetDataList", sheetDataList);
+        } else {
+        }
     },
-    SaveSheetData({ state, commit }, documentId) {
-        //-- TODO - handle local sheets only and firebase sheets
-        let sheetDataList = state.sheetDataList;
-        sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
-        Database.UpdateSheet(sheetDataList, documentId);
-        localStorage.setItem(storageKeys.sheetDataList, JSON.stringify(sheetDataList));
-        commit("setSheetDataList", sheetDataList);
-    },
-    RemoveSheetDataItem({ dispatch, state }, item) {
+    RemoveSheetDataItem({ dispatch, state, rootState }, item) {
         //remove row from sheetData
         let result = state.sheetData;
         const index = result.rows.indexOf(item);
         if (index > -1) {
             result.rows.splice(index, 1);
         }
-        dispatch("SetSheetData", result);
+        dispatch("SetSheetData", [result, rootState.sheets.currentDocumentId]);
     },
-    AddCustomRow({ state, dispatch }, selectedRow) {
+    /** Clear pokemon from row **/
+    ClearSheetRow({ dispatch, state, rootState }, item) {
+        let result = state.sheetData;
+        const index = result.rows.indexOf(item);
+        let clearedRow = {};
+        Object.keys(result.rows[index]).map(() => {
+            clearedRow = {
+                location: result.rows[index].location,
+                actions: result.rows[index].actions,
+            };
+            state.sheetDataList.players.forEach((player) => {
+                clearedRow[player.name] = "";
+            });
+        });
+        result.rows[index] = clearedRow;
+        dispatch("SetSheetData", [result, rootState.sheets.currentDocumentId]);
+    },
+    AddCustomRow({ state, dispatch, rootState }, selectedRow) {
         //Add properties according to which players exist.
         let result = state.sheetData;
         let row = {
@@ -121,14 +143,10 @@ const actions = {
             result.rows.splice(insertIndex + 1, 0, row);
         }
 
-        dispatch("SetSheetData", result);
+        dispatch("SetSheetData", [result, rootState.sheets.currentDocumentId]);
     },
     async InitializeSheetDataList({ commit, dispatch }, [title, players]) {
-        let sheetDataList = {
-            title: title,
-            players: players,
-            dataSheets: [],
-        };
+        let sheetDataList = SheetDataList(title, players);
         let playerHeaders = [];
         players.forEach((player) => {
             playerHeaders.push({
@@ -137,6 +155,7 @@ const actions = {
                 sortable: false,
                 isPlayer: true,
             });
+            sheetDataList.playerEmails.push(player.email);
         });
 
         PokemonGens.routes.forEach((routeList, index) => {
@@ -169,8 +188,7 @@ const actions = {
         const documentId = await Database.CreateSheet(sheetDataList);
 
         commit("setSheetDataList", sheetDataList);
-        dispatch("SetSheetData", sheetDataList.dataSheets[0]);
-        dispatch("SaveSheetData", sheetDataList);
+        dispatch("SetSheetData", [sheetDataList.dataSheets[0], documentId]);
         dispatch("sheets/AddOrRemoveSavedSheet", SavedSheet(documentId, sheetDataList.title), {
             root: true,
         });
@@ -178,19 +196,21 @@ const actions = {
     },
     async JoinSheet({ commit, dispatch, state, rootState }, documentId) {
         let sheetDataList;
-        if (!!rootState.sheets.currentUser) {
+        sheetDataList = await Database.GetSheetByDocumentId(documentId);
+        const currentUserIsInvited = !!rootState.sheets.currentUser
+            ? sheetDataList?.playerEmails?.includes(rootState.sheets.currentUser.email) ?? false
+            : false;
+        if (currentUserIsInvited || !sheetDataList?.isPrivate) {
             //Subscribe to any changes done to the sheet document in firebase.
             sheetDataList = await Database.SubscribeToSheet((dbSheetDataList) => {
                 if (dbSheetDataList) {
                     commit("setSheetDataList", dbSheetDataList);
-                    dispatch("SetSheetData", dbSheetDataList.dataSheets[state.selectedSheet]);
+                    dispatch("SetSheetData", [dbSheetDataList.dataSheets[state.selectedSheet]]);
                 }
             }, documentId);
         } else {
-            //Get the sheet data without subscribing to live changes.
-            sheetDataList = await Database.GetSheetByDocumentId(documentId);
-            commit("setSheetDataList", sheetDataList);
-            dispatch("SetSheetData", sheetDataList.dataSheets[state.selectedSheet]);
+            // Tell the user he has no access to this sheet.
+            return Constants.JOIN_SHEET_ERRORS.NO_ACCESS;
         }
 
         if (sheetDataList) {
@@ -199,9 +219,9 @@ const actions = {
                 root: true,
             });
         }
-        return !!sheetDataList;
+        return !!sheetDataList ? true : Constants.JOIN_SHEET_ERRORS.DOES_NOT_EXIST;
     },
-    ResetCurrentSheet({ state, dispatch }) {
+    ResetCurrentSheet({ state, dispatch, rootState }) {
         let sheetData = state.sheetData;
         sheetData.rows = sheetData.rows.map((row) => {
             let result = {
@@ -213,7 +233,7 @@ const actions = {
             });
             return result;
         });
-        dispatch("SetSheetData", sheetData);
+        dispatch("SetSheetData", [sheetData, rootState.sheets.currentDocumentId]);
     },
 };
 

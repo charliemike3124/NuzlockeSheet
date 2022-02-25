@@ -16,5 +16,8 @@ export default {
             }
             return src;
         },
+        deepCopy(object) {
+            return JSON.parse(JSON.stringify(object));
+        },
     },
 };

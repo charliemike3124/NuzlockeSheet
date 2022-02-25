@@ -1,8 +1,12 @@
 import { App } from "@/firebase.config.js";
-import User from "../resources/models/User";
+import { User } from "../resources/models";
+import { Constants } from "../resources/constants";
 import {
     signInWithPopup,
     GoogleAuthProvider,
+    FacebookAuthProvider,
+    TwitterAuthProvider,
+    EmailAuthProvider,
     getAuth,
     signOut,
     setPersistence,
@@ -11,13 +15,28 @@ import {
 } from "firebase/auth";
 
 //-- Sings in with google popup
-async function SignInWithGoogleAsync() {
+async function SignInWithPopupAsync(provider) {
     const auth = getAuth(App);
-    let signedInUser = User();
-    const gProvider = new GoogleAuthProvider();
+    let signedInUser, authProvider;
+
+    switch (provider) {
+        case Constants.AUTH_PROVIDERS.GOOGLE:
+            authProvider = new GoogleAuthProvider();
+            break;
+        case Constants.AUTH_PROVIDERS.EMAIL:
+            authProvider = new EmailAuthProvider();
+            break;
+        case Constants.AUTH_PROVIDERS.FACEBOOK:
+            authProvider = new FacebookAuthProvider();
+            break;
+        case Constants.AUTH_PROVIDERS.TWITTER:
+            authProvider = new TwitterAuthProvider();
+            break;
+    }
+
     try {
         setPersistence(auth, browserLocalPersistence);
-        const response = await signInWithPopup(auth, gProvider);
+        const response = await signInWithPopup(auth, authProvider);
         signedInUser = User(
             response.user.uid,
             response.user.displayName,
@@ -59,7 +78,7 @@ function CheckForSignedInUser(SetCurrentUser) {
 }
 
 export default {
-    SignInWithGoogleAsync,
+    SignInWithPopupAsync,
     CheckForSignedInUser,
     SignOutAsync,
 };

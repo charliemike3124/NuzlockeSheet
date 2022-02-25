@@ -10,6 +10,7 @@
         class="elevation-1"
         :options="tableOptions"
     >
+        <!--Header-->
         <template v-slot:top>
             <v-row class="ma-2" justify="start">
                 <v-col>
@@ -36,6 +37,7 @@
                                         icon
                                         class="mr-2"
                                         :color="action.toggleColor"
+                                        :disabled="!isCurrentPlayerInvited"
                                         @click="callMethodByName(action.eventHandler)"
                                     >
                                         <v-icon>{{ action.icon }}</v-icon>
@@ -49,6 +51,7 @@
             </v-row>
         </template>
 
+        <!--Location Rows-->
         <template v-slot:item.location="{ item }">
             <a
                 v-if="!item.location.isCustom"
@@ -59,15 +62,18 @@
             </a>
             <span v-else>{{ item.location.name }}</span>
         </template>
+
+        <!--Player Rows-->
         <template v-for="prop in playerHeaders" v-slot:[`item.${prop.value}`]="{ item }">
             <v-autocomplete
                 ref="autoComplete"
                 class="autocomplete"
-                :items="pokemonList"
-                :value="getSelectedPokemon(item[`${prop.value}`])"
                 item-text="name"
                 dense
                 hide-details
+                :items="pokemonList"
+                :value="getSelectedPokemon(item[`${prop.value}`])"
+                :disabled="!isCurrentPlayerInvited"
                 @change="onPokemonSelect($event, prop.value, item)"
             >
                 <template v-slot:selection="data">
@@ -91,12 +97,19 @@
             </v-autocomplete>
         </template>
 
+        <!--Action Rows-->
         <template v-slot:item.actions="{ item }">
             <v-tooltip bottom v-for="(action, index) in tableActions" :key="index">
                 <template v-slot:activator="{ on, attrs }">
                     <v-icon
                         :class="!!action.className ? action.className(item) : ''"
-                        :disabled="!!action.disabled ? action.disabled(data, item) : false"
+                        :disabled="
+                            !isCurrentPlayerInvited
+                                ? true
+                                : !!action.disabled
+                                ? action.disabled(data, item)
+                                : false
+                        "
                         v-bind="attrs"
                         v-on="on"
                         small
@@ -108,7 +121,7 @@
                 {{ action.tooltip }}
             </v-tooltip>
         </template>
-
+        <!--Displayed when there is no data-->
         <template v-slot:no-data>
             <span>Add some routes to this sheet!</span>
         </template>
@@ -117,7 +130,7 @@
 
 <script>
 import { mapActions, mapState } from "vuex";
-import { SnackbarAlerts, PokemonGens, Constants } from "@/resources";
+import { PokemonGens, Constants } from "@/resources/constants";
 export default {
     name: "NuzlockeTable",
     components: {},
@@ -126,9 +139,12 @@ export default {
             required: true,
             default: () => {},
         },
+        isCurrentPlayerInvited: Boolean,
     },
     computed: {
         ...mapState("pokemon", ["pokemonList"]),
+        ...mapState("nuzlocke", ["sheetDataList"]),
+        ...mapState("sheets", ["currentDocumentId", "currentUser"]),
         playerHeaders() {
             return this.data.headers.filter((item) => item.isPlayer);
         },
@@ -139,13 +155,6 @@ export default {
         pokemonGames: PokemonGens.names,
         selectedGame: PokemonGens.names[0],
         topActions: [
-            {
-                name: "save",
-                icon: "mdi-content-save",
-                tooltip: "Save",
-                toggleColor: "primary",
-                eventHandler: "saveSheet",
-            },
             {
                 name: "clean",
                 icon: "mdi-eraser",
@@ -184,10 +193,9 @@ export default {
                 action: "addRow",
             },
             {
-                tooltip: "Delete Row",
-                icon: "mdi-delete",
-                action: "deleteItem",
-                disabled: (data, item) => data.rows.indexOf(item) === 0,
+                tooltip: "Clear Row",
+                icon: "mdi-eraser",
+                action: "clearItem",
             },
         ],
         tableOptions: {
@@ -201,10 +209,10 @@ export default {
             "RemoveSheetDataItem",
             "AddCustomRow",
             "SetSheetGame",
-            "SaveSheetData",
             "ResetCurrentSheet",
+            "ClearSheetRow",
         ]),
-        ...mapActions("pokemon", ["GetPokemonDataAsync", "UpdatePokemonListByNameAsync"]),
+        ...mapActions("pokemon", ["UpdatePokemonListByNameAsync"]),
         itemClass(item) {
             let className =
                 item?.rowStatus === Constants.ROW_STATUS.DEAD
@@ -217,27 +225,29 @@ export default {
         addRow(selectedRow) {
             this.AddCustomRow(selectedRow);
         },
+        //-- Clears the pokemon in the given row
+        clearItem(item) {
+            this.ClearSheetRow(item);
+        },
+        //-- Deletes a given row
         deleteItem(item) {
             this.RemoveSheetDataItem(item);
         },
+        //-- Sets the status of a row
         setRowStatus(item, status) {
-            let sheetData = JSON.parse(JSON.stringify(this.data));
+            let sheetData = this.deepCopy(this.data);
             const index = this.data.rows.indexOf(item);
             sheetData.rows[index].rowStatus =
                 sheetData.rows[index].rowStatus === status ? "" : status;
-            this.SetSheetData(sheetData);
+            this.SetSheetData([sheetData, this.currentDocumentId]);
         },
+        //-- Called when selecting a pokemon game
         async onSelectGame() {
             this.SetSheetGame(this.selectedGame);
         },
         //-- Opens a new tab to bulbapedia with the pokemon's data
         showPokemonData(item) {
             window.open(`${this.bulbapediaBaseURL}/${item.name}`, "_blank");
-        },
-        //-- Saves the sheet to firebase and updates other players on any changes.
-        saveSheet() {
-            this.SaveSheetData();
-            this.$emit("showSnackbar", SnackbarAlerts.sheetSaved);
         },
         //-- Resets the whole sheet to its original state.
         resetSheet() {
@@ -253,8 +263,7 @@ export default {
             let sheetData = JSON.parse(JSON.stringify(this.data));
             const index = this.data.rows.indexOf(row);
             sheetData.rows[index][prop] = pokemon;
-            this.SetSheetData(sheetData);
-            this.SaveSheetData(this.$route.params.code);
+            this.SetSheetData([sheetData, this.currentDocumentId]);
         },
         //-- Returns all the pokemon data by name, used in the template.
         getSelectedPokemon(pokemon) {
@@ -264,16 +273,26 @@ export default {
         managePlayers() {
             this.$emit("managePlayers");
         },
-    },
-    watch: {
-        loadingData(val) {
-            //-- Called when data finishes loading.
-            if (!val && !!this.$refs?.autoComplete?.length) {
+        //-- Removes google chrome autocomplete functinoality from all inputs
+        removeInputAutocomplete() {
+            if (this.$refs?.autoComplete?.length) {
                 for (const ref of this.$refs.autoComplete) {
                     let input = ref?.$el.querySelector("input");
                     input.autocomplete = false;
                 }
             }
+        },
+    },
+    watch: {
+        loadingData(val) {
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    //-- Called when data finishes loading.
+                    if (!val && this.$refs?.autoComplete?.length) {
+                        this.removeInputAutocomplete();
+                    }
+                }, 1000);
+            });
         },
     },
 };
