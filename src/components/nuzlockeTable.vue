@@ -86,11 +86,13 @@
                             {{ data.item.nickname ? `(${data.item.nickname})` : "" }}
                         </span>
                         <div v-if="!!item[`${prop.value}`]">
-                            <img
+                            <CVTooltip
+                                :text="type.type.name"
                                 v-for="(type, index) in item[`${prop.value}`].types"
                                 :key="index"
-                                :src="requireImage(`types_icons/${type.type.name}.png`)"
-                            />
+                            >
+                                <img :src="requireImage(`types_icons/${type.type.name}.png`)" />
+                            </CVTooltip>
                         </div>
                     </div>
                 </template>
@@ -131,9 +133,10 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import { PokemonGens, Constants } from "@/resources/constants";
+import { CVTooltip } from "@/components/common";
 export default {
     name: "NuzlockeTable",
-    components: {},
+    components: { CVTooltip },
     props: {
         data: {
             required: true,
