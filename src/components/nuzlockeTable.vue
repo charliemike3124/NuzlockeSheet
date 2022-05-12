@@ -15,7 +15,7 @@
             <v-row class="ma-2" justify="start">
                 <v-col>
                     <v-select
-                        class="pt-0"
+                        class="pt-0 v-select-sm"
                         :items="pokemonGames"
                         :menu-props="{ top: false, offsetY: true }"
                         v-model="selectedGame"
@@ -29,22 +29,17 @@
                 <v-col>
                     <div class="d-flex justify-end">
                         <div v-for="(action, index) in topActions" :key="index" align-self="end">
-                            <v-tooltip bottom>
-                                <template v-slot:activator="{ on, attrs }">
-                                    <v-btn
-                                        v-on="on"
-                                        v-bind="attrs"
-                                        icon
-                                        class="mr-2"
-                                        :color="action.toggleColor"
-                                        :disabled="!isCurrentPlayerInvited"
-                                        @click="callMethodByName(action.eventHandler)"
-                                    >
-                                        <v-icon>{{ action.icon }}</v-icon>
-                                    </v-btn>
-                                </template>
-                                <span>{{ action.tooltip }}</span>
-                            </v-tooltip>
+                            <CVTooltip :text="action.tooltip">
+                                <v-btn
+                                    icon
+                                    class="mr-2"
+                                    :color="action.toggleColor"
+                                    :disabled="!isCurrentPlayerInvited"
+                                    @click="callMethodByName(action.eventHandler)"
+                                >
+                                    <v-icon>{{ action.icon }}</v-icon>
+                                </v-btn>
+                            </CVTooltip>
                         </div>
                     </div>
                 </v-col>
@@ -101,27 +96,22 @@
 
         <!--Action Rows-->
         <template v-slot:item.actions="{ item }">
-            <v-tooltip bottom v-for="(action, index) in tableActions" :key="index">
-                <template v-slot:activator="{ on, attrs }">
-                    <v-icon
-                        :class="!!action.className ? action.className(item) : ''"
-                        :disabled="
-                            !isCurrentPlayerInvited
-                                ? true
-                                : !!action.disabled
-                                ? action.disabled(data, item)
-                                : false
-                        "
-                        v-bind="attrs"
-                        v-on="on"
-                        small
-                        @click="callMethodByName(action.action, [item, ...action.actionParams])"
-                    >
-                        {{ action.icon }}
-                    </v-icon>
-                </template>
-                {{ action.tooltip }}
-            </v-tooltip>
+            <CVTooltip :text="action.tooltip" v-for="(action, index) in tableActions" :key="index">
+                <v-icon
+                    :class="!!action.className ? action.className(item) : ''"
+                    :disabled="
+                        !isCurrentPlayerInvited
+                            ? true
+                            : !!action.disabled
+                            ? action.disabled(data, item)
+                            : false
+                    "
+                    small
+                    @click="callMethodByName(action.action, [item, ...action.actionParams])"
+                >
+                    {{ action.icon }}
+                </v-icon>
+            </CVTooltip>
         </template>
         <!--Displayed when there is no data-->
         <template v-slot:no-data>
@@ -132,7 +122,7 @@
 
 <script>
 import { mapActions, mapState } from "vuex";
-import { PokemonGens, Constants } from "@/resources/constants";
+import { PokemonGens, Constants } from "../resources/constants";
 import { CVTooltip } from "@/components/common";
 export default {
     name: "NuzlockeTable",

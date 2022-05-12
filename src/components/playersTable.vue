@@ -1,87 +1,93 @@
 <template>
     <div>
-        <div class="mt-3">
-            <span class="font-weight-bold">Add a Player</span>
-        </div>
-        <div class="mx-6 mt-3 player-form">
-            <v-form v-model="playerForm.isValid">
-                <v-text-field
-                    v-model="playerForm.inputs.addedPlayerName.value"
-                    class="v-input-small mt-1"
-                    :class="addPlayerInputClass"
-                    label="Player Name *"
-                    outlined
-                    required
-                    hide-details
-                    @keydown.prevent.enter="addPlayer"
-                ></v-text-field>
-                <v-text-field
-                    v-model="playerForm.inputs.addedPlayerEmail.value"
-                    class="v-input-small mt-1"
-                    :class="addPlayerInputClass"
-                    label="Email *"
-                    outlined
-                    required
-                    hide-details
-                    @keydown.prevent.enter="addPlayer"
-                ></v-text-field>
-                <v-btn color="primary" @click="addPlayer" :disabled="!playerForm.isValid">
-                    Add
-                </v-btn>
-            </v-form>
+        <!--Add Player Form-->
+        <div class="ma-4">
+            <div class="mt-3">
+                <span class="font-weight-bold">Add a Player</span>
+            </div>
+            <div class="mx-6 mt-3 player-form">
+                <v-form v-model="playerForm.isValid" ref="playerForm">
+                    <v-text-field
+                        v-for="(input, index) in playerForm.inputs"
+                        :key="index"
+                        v-model="input.value"
+                        class="v-input-small mt-1"
+                        :class="addPlayerInputClass"
+                        :label="input.name"
+                        :rules="input.rules"
+                        outlined
+                        required
+                        hide-details
+                        @keydown.prevent.enter="addPlayer"
+                    ></v-text-field>
+                    <v-btn color="primary" @click="addPlayer" :disabled="!playerForm.isValid">
+                        Add
+                    </v-btn>
+                </v-form>
+            </div>
         </div>
 
-        <div class="mt-3">
-            <span class="font-weight-bold">Current Players</span>
-        </div>
-        <div class="mx-6 my-2">
-            <v-simple-table dense v-if="players.length">
-                <template v-slot:default>
-                    <thead>
-                        <th class="text-center">Name</th>
-                        <th class="text-center">Email</th>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(player, index) in players" :key="index">
-                            <td class="text-center">
-                                <div class="name-cont">
-                                    <img
-                                        v-if="edittingPlayer !== player && player.photoUrl"
-                                        :src="player.photoURL"
-                                        crossorigin=""
-                                    />
-                                    <span v-if="edittingPlayer !== player">{{ player.name }}</span>
+        <!--Current Players Table-->
+        <div class="ma-4">
+            <div class="mt-3">
+                <span class="font-weight-bold">Current Players</span>
+            </div>
+            <div class="mx-6 my-2">
+                <v-simple-table dense v-if="players.length">
+                    <template v-slot:default>
+                        <thead>
+                            <th class="text-center">Name</th>
+                            <th class="text-center">Email</th>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(player, index) in players" :key="index">
+                                <td class="text-center">
+                                    <div class="name-cont">
+                                        <span v-if="playerToBeEdited !== player">
+                                            {{ player.name }}
+                                        </span>
+                                        <v-text-field
+                                            autofocus
+                                            ref="editInput"
+                                            class="pa-0"
+                                            v-else
+                                            v-model="editedPlayerName"
+                                            hide-details
+                                            @keydown.prevent.enter="editPlayer(player)"
+                                        ></v-text-field>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span v-if="playerToBeEdited !== player">
+                                        {{ player.email }}
+                                    </span>
                                     <v-text-field
-                                        ref="editInput"
                                         class="pa-0"
                                         v-else
-                                        :value="player.name"
+                                        v-model="editedPlayerEmail"
                                         hide-details
-                                        @keydown.prevent.enter="editPlayer($event, player)"
+                                        @keydown.prevent.enter="editPlayer(player)"
                                     ></v-text-field>
-                                </div>
-                            </td>
-                            <td>
-                                <span>{{ player.email }}</span>
-                            </td>
-                            <td>
-                                <v-btn
-                                    icon
-                                    :style="edittingPlayer === player ? 'color: orange' : ''"
-                                    @click="editPlayer(null, player)"
-                                >
-                                    <v-icon>mdi-account-edit</v-icon>
-                                </v-btn>
-                                <v-btn icon @click="removePlayer(player)">
-                                    <v-icon>mdi-delete</v-icon>
-                                </v-btn>
-                            </td>
-                        </tr>
-                    </tbody>
-                </template>
-            </v-simple-table>
-            <div v-else class="text-center">
-                <span>No players added.</span>
+                                </td>
+                                <td>
+                                    <v-btn
+                                        icon
+                                        :style="playerToBeEdited === player ? 'color: orange' : ''"
+                                        @click="editPlayer(player)"
+                                    >
+                                        <v-icon>mdi-account-edit</v-icon>
+                                    </v-btn>
+                                    <v-btn icon @click="removePlayer(player)">
+                                        <v-icon>mdi-delete</v-icon>
+                                    </v-btn>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </template>
+                </v-simple-table>
+                <div v-else class="text-center">
+                    <span>No players added.</span>
+                </div>
             </div>
         </div>
     </div>
@@ -90,6 +96,8 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import { User } from "../resources/models";
+import stringUtils from "../resources/utils/stringUtils";
+
 export default {
     name: "playersTable",
     props: {},
@@ -105,54 +113,58 @@ export default {
             players: [],
             addedPlayerName: "",
             addedPlayerEmail: "",
-            edittingPlayer: null,
+            playerToBeEdited: null,
+            editedPlayerName: "",
+            editedPlayerEmail: "",
             playerForm: {
                 isValid: false,
-                inputs: {
-                    addedPlayerName: {
+                inputs: [
+                    {
+                        name: "Name",
+                        value: "",
+                        rules: [(v) => !!v || "Name can't be empty!"],
+                    },
+                    {
+                        name: "Email",
                         value: "",
                         rules: [
-                            (v) => !!v || "Name can't be empty!",
-                            (v) => !playerExists(v) || "Another player has that name.",
+                            (v) => !!v || "Email can't be empty!",
+                            (v) => stringUtils.ValidateEmail(v) || "Enter a valid email!",
                         ],
                     },
-                    addedPlayerEmail: {
-                        value: "",
-                        rules: [(v) => !!v || "Email can't be empty!"],
-                    },
-                },
+                ],
             },
         };
     },
     methods: {
         addPlayer() {
-            //-- TODO : add email validation
             const player = User(
                 null,
-                this.playerForm.inputs.addedPlayerName.value,
-                this.playerForm.inputs.addedPlayerEmail.value
+                this.playerForm.inputs[0].value,
+                this.playerForm.inputs[1].value
             );
-            const playerExists = this.players.find(
-                (p) => p.name === this.playerForm.addedPlayerName
-            );
-            if (!playerExists) {
+            if (!this.playerExists(player)) {
                 this.players.push(player);
-                this.playerForm.inputs.addedPlayerName.value = "";
-                this.playerForm.inputs.addedPlayerEmail.value = "";
+                this.playerForm.inputs[0].value = "";
+                this.playerForm.inputs[1].value = "";
             }
+            this.$refs.playerForm.reset();
         },
-        editPlayer(event, player) {
-            if (event) {
-                player.previousName = player.name;
-                player.name = event.target.value;
-                this.edittingPlayer = null;
-            } else {
-                if (this.edittingPlayer) {
-                    this.edittingPlayer = null;
-                } else {
-                    this.edittingPlayer = player;
-                    this.$nextTick(() => this.$refs.editInput[0].focus());
+        editPlayer(player) {
+            if (this.playerToBeEdited) {
+                if (this.editedPlayerName) {
+                    player.previousName = player.name;
+                    player.name = this.editedPlayerName;
                 }
+                if (this.editedPlayerEmail) {
+                    player.previousEmail = player.email;
+                    player.email = this.editedPlayerEmail;
+                }
+                this.playerToBeEdited = null;
+            } else {
+                this.editedPlayerEmail = player.email;
+                this.editedPlayerName = player.name;
+                this.playerToBeEdited = player;
             }
         },
         removePlayer(player) {
@@ -162,7 +174,7 @@ export default {
             }
         },
         playerExists(player) {
-            return this.players.find((p) => p.name === player.addedPlayerName);
+            return this.players.find((p) => p.name === player.name && p.email === player.email);
         },
     },
     mounted() {

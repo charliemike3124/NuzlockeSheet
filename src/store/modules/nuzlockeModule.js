@@ -55,7 +55,7 @@ const actions = {
             let playerHeaders = [];
 
             players.forEach((player) => {
-                //If a player's name was editted, make the property name change in the rows of all the sheets.
+                //If a player's name or email was editted, make the property change in the rows of all the sheets.
                 if (player.hasOwnProperty("previousName")) {
                     sheet.rows.forEach((row) => {
                         row[player.name] = row[player.previousName];
@@ -63,13 +63,20 @@ const actions = {
                     });
                     delete player.previousName;
                 }
+                if (player.hasOwnProperty("previousEmail")) {
+                    const emailIndex = sheetDataList.playerEmails.indexOf(player.previousEmail);
+                    sheetDataList.playerEmails.splice(emailIndex, 1);
+                    delete player.previousEmail;
+                }
                 playerHeaders.push({
                     text: player.name,
                     value: player.name,
-                    sortable: true,
+                    sortable: false,
                     isPlayer: true,
                 });
-                sheetDataList.playerEmails.push(player.email);
+                if (!sheetDataList.playerEmails.includes(player.email)) {
+                    sheetDataList.playerEmails.push(player.email);
+                }
             });
 
             let headers = [locationHeader, ...playerHeaders, ...nonPlayerHeaders];

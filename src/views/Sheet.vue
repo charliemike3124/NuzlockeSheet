@@ -9,16 +9,15 @@
                 </template>
 
                 <v-list>
-                    <v-list-item class="pointer" @click="onShareSheetClick">
+                    <v-list-item
+                        class="pointer"
+                        @click="callMethodByName(item.action)"
+                        v-for="(item, index) in menuActions"
+                        :key="index"
+                    >
                         <v-list-item-title>
-                            <i class="mdi mdi-share"></i>
-                            Share
-                        </v-list-item-title>
-                    </v-list-item>
-                    <v-list-item class="pointer" @click="onExitSheetClick">
-                        <v-list-item-title>
-                            <i class="mdi mdi-subdirectory-arrow-left"></i>
-                            Exit
+                            <i class="mdi" :class="item.icon"></i>
+                            {{ item.name }}
                         </v-list-item-title>
                     </v-list-item>
                 </v-list>
@@ -135,6 +134,18 @@ export default {
             text: "",
             color: "",
         },
+        menuActions: [
+            {
+                name: "Share",
+                action: "onShareSheetClick",
+                icon: "mdi-share",
+            },
+            {
+                name: "Exit",
+                action: "onExitSheetClick",
+                icon: "mdi-subdirectory-arrow-left",
+            },
+        ],
     }),
 
     methods: {

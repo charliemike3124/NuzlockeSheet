@@ -6,7 +6,8 @@ import vuetify from "./plugins/vuetify";
 import AOS from "./plugins/AOS";
 import GeneralHelpers from "@/mixins/generalHelpers";
 
-import "./styles/baseStyles.less";
+import "./styles/global/baseStyles.less";
+import "./styles/global/globalVuetify.less";
 import "aos/dist/aos.css";
 
 Vue.config.productionTip = false;
