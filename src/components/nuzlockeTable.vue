@@ -35,7 +35,7 @@
                                     class="mr-2"
                                     :color="action.toggleColor"
                                     :disabled="!isCurrentPlayerInvited"
-                                    @click="callMethodByName(action.eventHandler)"
+                                    @click="action.eventHandler"
                                 >
                                     <v-icon>{{ action.icon }}</v-icon>
                                 </v-btn>
@@ -62,7 +62,6 @@
         <template v-for="prop in playerHeaders" v-slot:[`item.${prop.value}`]="{ item }">
             <v-autocomplete
                 ref="autoComplete"
-                class="autocomplete"
                 item-text="name"
                 dense
                 hide-details
@@ -86,7 +85,7 @@
                                 v-for="(type, index) in item[`${prop.value}`].types"
                                 :key="index"
                             >
-                                <img :src="requireImage(`types_icons/${type.type.name}.png`)" />
+                                <img :src="GeneralHelpers.requireImage(`types_icons/${type.type.name}.png`)" />
                             </CVTooltip>
                         </div>
                     </div>
@@ -107,9 +106,9 @@
                             : false
                     "
                     small
-                    @click="callMethodByName(action.action, [item, ...action.actionParams])"
+                    @click="action.actionParams ? action.action(item, action.actionParams) : action.action(item)"
                 >
-                    {{ action.icon }}
+                    {{ action.icon }} 
                 </v-icon>
             </CVTooltip>
         </template>
@@ -138,63 +137,65 @@ export default {
         ...mapState("pokemon", ["pokemonList"]),
         ...mapState("nuzlocke", ["sheetDataList"]),
         ...mapState("sheets", ["currentDocumentId", "currentUser"]),
+        
         playerHeaders() {
             return this.data.headers.filter((item) => item.isPlayer);
         },
     },
-    data: () => ({
-        loadingData: false,
-        bulbapediaBaseURL: "https://bulbapedia.bulbagarden.net/wiki",
-        pokemonGames: PokemonGens.names,
-        selectedGame: PokemonGens.names[0],
-        topActions: [
-            {
-                name: "clean",
-                icon: "mdi-eraser",
-                tooltip: "Reset sheet (Only Pokemon)",
-                toggleColor: "",
-                eventHandler: "resetSheet",
+    data(){ 
+        return {
+            loadingData: false,
+            bulbapediaBaseURL: "https://bulbapedia.bulbagarden.net/wiki",
+            pokemonGames: PokemonGens.names,
+            selectedGame: PokemonGens.names[0],
+            topActions: [
+                {
+                    name: "clean",
+                    icon: "mdi-eraser",
+                    tooltip: "Reset sheet (Only Pokemon)",
+                    toggleColor: "",
+                    eventHandler: this.eventHandler,
+                },
+                {
+                    name: "managePlayers",
+                    icon: "mdi-account-plus",
+                    tooltip: "Manage Players",
+                    toggleColor: "",
+                    eventHandler: this.managePlayers,
+                },
+            ],
+            tableActions: [
+                {
+                    tooltip: "Mark as 'In party''",
+                    icon: "mdi-checkbox-marked-circle",
+                    action: this.setRowStatus,
+                    actionParams: Constants.ROW_STATUS.IN_PARTY,
+                    className: (item) =>
+                        item.rowStatus === Constants.ROW_STATUS.IN_PARTY ? "icon-active" : "",
+                },
+                {
+                    tooltip: "Mark as 'Dead'",
+                    icon: "mdi-skull",
+                    action: this.setRowStatus,
+                    actionParams: Constants.ROW_STATUS.DEAD,
+                    className: (item) =>
+                        item.rowStatus === Constants.ROW_STATUS.DEAD ? "icon-active" : "",
+                },
+                {
+                    tooltip: "Add row below",
+                    icon: "mdi-plus",
+                    action: this.addRow,
+                },
+                {
+                    tooltip: "Clear Row",
+                    icon: "mdi-eraser",
+                    action: this.clearItem,
+                },
+            ],
+            tableOptions: {
+                itemsPerPage: 15,
             },
-            {
-                name: "managePlayers",
-                icon: "mdi-account-plus",
-                tooltip: "Manage Players",
-                toggleColor: "",
-                eventHandler: "managePlayers",
-            },
-        ],
-        tableActions: [
-            {
-                tooltip: "Mark as 'In party''",
-                icon: "mdi-checkbox-marked-circle",
-                action: "setRowStatus",
-                actionParams: [Constants.ROW_STATUS.IN_PARTY],
-                className: (item) =>
-                    item.rowStatus === Constants.ROW_STATUS.IN_PARTY ? "icon-active" : "",
-            },
-            {
-                tooltip: "Mark as 'Dead'",
-                icon: "mdi-skull",
-                action: "setRowStatus",
-                actionParams: [Constants.ROW_STATUS.DEAD],
-                className: (item) =>
-                    item.rowStatus === Constants.ROW_STATUS.DEAD ? "icon-active" : "",
-            },
-            {
-                tooltip: "Add row below",
-                icon: "mdi-plus",
-                action: "addRow",
-            },
-            {
-                tooltip: "Clear Row",
-                icon: "mdi-eraser",
-                action: "clearItem",
-            },
-        ],
-        tableOptions: {
-            itemsPerPage: 15,
-        },
-    }),
+    }},
 
     methods: {
         ...mapActions("nuzlocke", [
@@ -206,6 +207,7 @@ export default {
             "ClearSheetRow",
         ]),
         ...mapActions("pokemon", ["UpdatePokemonListByNameAsync"]),
+
         itemClass(item) {
             let className =
                 item?.rowStatus === Constants.ROW_STATUS.DEAD
@@ -215,39 +217,40 @@ export default {
                     : "";
             return className;
         },
+
         addRow(selectedRow) {
             this.AddCustomRow(selectedRow);
         },
-        //-- Clears the pokemon in the given row
+
         clearItem(item) {
             this.ClearSheetRow(item);
         },
-        //-- Deletes a given row
+
         deleteItem(item) {
             this.RemoveSheetDataItem(item);
         },
-        //-- Sets the status of a row
+
         setRowStatus(item, status) {
-            let sheetData = this.deepCopy(this.data);
+            let sheetData = this.GeneralHelpers.deepCopy(this.data);
             const index = this.data.rows.indexOf(item);
             sheetData.rows[index].rowStatus =
                 sheetData.rows[index].rowStatus === status ? "" : status;
             this.SetSheetData([sheetData, this.currentDocumentId]);
         },
-        //-- Called when selecting a pokemon game
+        
         async onSelectGame() {
             this.SetSheetGame(this.selectedGame);
         },
-        //-- Opens a new tab to bulbapedia with the pokemon's data
+        
         showPokemonData(item) {
             window.open(`${this.bulbapediaBaseURL}/${item.name}`, "_blank");
         },
-        //-- Resets the whole sheet to its original state.
+        
         resetSheet() {
             //TODO - show confirmation dialog and add reset logic (only erases player pokemon)
             this.ResetCurrentSheet();
         },
-        //-- Called when selecting a pokemon from the autocomplete
+        
         async onPokemonSelect(name, prop, row) {
             let pokemon;
             if (name) {
@@ -258,15 +261,15 @@ export default {
             sheetData.rows[index][prop] = pokemon;
             this.SetSheetData([sheetData, this.currentDocumentId]);
         },
-        //-- Returns all the pokemon data by name, used in the template.
+        
         getSelectedPokemon(pokemon) {
             return this.pokemonList.find((pok) => pok.name === pokemon?.name);
         },
-        //-- Opens players management popup
+        
         managePlayers() {
             this.$emit("managePlayers");
         },
-        //-- Removes google chrome autocomplete functinoality from all inputs
+        
         removeInputAutocomplete() {
             if (this.$refs?.autoComplete?.length) {
                 for (const ref of this.$refs.autoComplete) {

@@ -11,7 +11,7 @@
                 <v-list>
                     <v-list-item
                         class="pointer"
-                        @click="callMethodByName(item.action)"
+                        @click="item.action"
                         v-for="(item, index) in menuActions"
                         :key="index"
                     >
@@ -121,7 +121,7 @@ export default {
         },
     },
 
-    data: () => ({
+    data(){return {
         isSigningIn: false,
         showAlert: false,
         addedPlayerName: "",
@@ -137,16 +137,16 @@ export default {
         menuActions: [
             {
                 name: "Share",
-                action: "onShareSheetClick",
+                action: this.onShareSheetClick,
                 icon: "mdi-share",
             },
             {
                 name: "Exit",
-                action: "onExitSheetClick",
+                action: this.onExitSheetClick,
                 icon: "mdi-subdirectory-arrow-left",
             },
         ],
-    }),
+    }},
 
     methods: {
         ...mapActions("nuzlocke", ["JoinSheet", "SetPlayers", "GetSelectedSheet"]),

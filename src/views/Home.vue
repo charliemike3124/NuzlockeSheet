@@ -1,7 +1,7 @@
 <template>
     <div class="main-cont grey lighten-5">
         <div class="title-img-cont" data-aos="zoom-in">
-            <img :src="requireImage('title.png')" />
+            <img :src="GeneralHelpers.requireImage('title.png')" />
         </div>
         <v-card class="card" data-aos="zoom-in" data-aos-delay="300">
             <v-card-text class="card-body">
@@ -25,18 +25,16 @@
                         </div>
                         <div v-if="currentUser">
                             <div class="profile-pic">
+                                Signed in as:
+                                <br />
                                 <img :src="currentUser.photoURL" crossorigin="" />
                                 <div>
-                                    <span>
-                                        Signed in as:
-                                        <br />
-                                        <strong>{{ currentUser.email }}</strong>
-                                    </span>
+                                    <strong>{{ currentUser.email }}</strong>
                                 </div>
                             </div>
                         </div>
                         <div class="mt-12">
-                            <strong>Made with ❤ by Charlie -</strong>
+                            <strong>Made by -</strong>
                             <v-btn
                                 icon
                                 href="https://www.linkedin.com/in/cvillalobosgtz/"
@@ -182,7 +180,7 @@ export default {
     methods: {
         ...mapActions("sheets", ["LoadSavedSheets", "SetCurrentUser"]),
         ...mapActions("nuzlocke", ["InitializeSheetDataList", "JoinSheet"]),
-        //-- Creates a sheet in firebase , sets vuex sheet state and pushes to Sheet view.
+        
         async createSheet() {
             this.creatingSheet = true;
             const documentId = await this.InitializeSheetDataList([
@@ -201,7 +199,7 @@ export default {
                 params: { code: documentId },
             });
         },
-        //-- If user is signed in, attempts to Subscribe to that document (onSnapshot), otherwise only gets the data once.
+        
         async joinSheet() {
             this.joiningSheet = true;
             const sheetExists = await this.JoinSheet(this.joinSheetForm.code);
@@ -217,7 +215,7 @@ export default {
             }
             this.joiningSheet = false;
         },
-        //-- Shows google sign in popup if there is no user currently signed in, signs off otherwise.
+        
         async onSignInOrOffBtn(fromJoinSheetBtn = false, authProvider) {
             this.isSigningIn = true;
             if (!this.currentUser) {
@@ -236,7 +234,7 @@ export default {
             }
             this.isSigningIn = false;
         },
-        //-- Handles main card view transitions depending on user's action.
+        
         setCardView(view) {
             if (view === this.VIEW_JOIN_SHEET && !this.currentUser) {
                 this.showSnackbar("Sign in first before joining a sheet!");
@@ -247,7 +245,7 @@ export default {
                 }, 300);
             }
         },
-        //-- Shows the snackbar with a given message
+        
         showSnackbar(text) {
             this.snackbar.show = true;
             this.snackbar.text = text;
