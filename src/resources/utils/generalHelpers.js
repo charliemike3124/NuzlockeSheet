@@ -6,6 +6,7 @@ export default {
             this[name]();
         }
     },
+
     requireImage(path) {
         let src = "";
         try {
@@ -15,7 +16,12 @@ export default {
         }
         return src;
     },
+
     deepCopy(object) {
         return JSON.parse(JSON.stringify(object));
+    },
+
+    getBulbapediaBaseUrl() {
+        return "https://bulbapedia.bulbagarden.net/wiki";
     },
 };

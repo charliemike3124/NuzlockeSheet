@@ -48,8 +48,6 @@
         <div class="table-cont mb-12">
             <NuzlockeTable
                 ref="nuzlockeTable"
-                :data="sheetData"
-                :isCurrentPlayerInvited="isCurrentPlayerInvited"
                 @showSnackbar="showSnackbar"
                 @managePlayers="onManagePlayersClick"
             ></NuzlockeTable>
@@ -111,45 +109,54 @@ export default {
     },
 
     computed: {
-        ...mapState("nuzlocke", ["sheetData", "sheetDataList", "selectedSheet"]),
+        ...mapState("nuzlocke", [
+            "sheetData",
+            "sheetDataList",
+            "selectedSheet",
+            "isCurrentPlayerInvited",
+        ]),
         ...mapState("sheets", ["currentUser", "currentDocumentId"]),
         userIsSignedIn() {
             return this.currentUser?.uid;
         },
-        isCurrentPlayerInvited() {
-            return !!this.sheetDataList.players.find((p) => p.email === this.currentUser?.email);
-        },
     },
 
-    data(){return {
-        isSigningIn: false,
-        showAlert: false,
-        addedPlayerName: "",
-        dialog: {
-            show: false,
-            title: "",
-        },
-        snackbar: {
-            show: false,
-            text: "",
-            color: "",
-        },
-        menuActions: [
-            {
-                name: "Share",
-                action: this.onShareSheetClick,
-                icon: "mdi-share",
+    data() {
+        return {
+            isSigningIn: false,
+            showAlert: false,
+            addedPlayerName: "",
+            dialog: {
+                show: false,
+                title: "",
             },
-            {
-                name: "Exit",
-                action: this.onExitSheetClick,
-                icon: "mdi-subdirectory-arrow-left",
+            snackbar: {
+                show: false,
+                text: "",
+                color: "",
             },
-        ],
-    }},
+            menuActions: [
+                {
+                    name: "Share",
+                    action: this.onShareSheetClick,
+                    icon: "mdi-share",
+                },
+                {
+                    name: "Exit",
+                    action: this.onExitSheetClick,
+                    icon: "mdi-subdirectory-arrow-left",
+                },
+            ],
+        };
+    },
 
     methods: {
-        ...mapActions("nuzlocke", ["JoinSheet", "SetPlayers", "GetSelectedSheet"]),
+        ...mapActions("nuzlocke", [
+            "JoinSheet",
+            "SetPlayers",
+            "GetSelectedSheet",
+            "SetIsCurrentPlayerInvited",
+        ]),
         ...mapActions("pokemon", ["SetPokemonListAsync"]),
         ...mapActions("sheets", ["SetCurrentUser", "SetCurrentDocumentId"]),
         showDialog(title) {
@@ -190,11 +197,6 @@ export default {
         },
         //-- End Event Handlers --//
     },
-    watch: {
-        isCurrentPlayerInvited(val) {
-            this.showAlert = !val;
-        },
-    },
     created() {
         this.GetSelectedSheet();
         this.SetCurrentDocumentId(this.$route.params.code);
@@ -212,6 +214,9 @@ export default {
                 this.$router.push({ name: "Home" });
             }
         }
+        this.SetIsCurrentPlayerInvited(
+            !!this.sheetDataList.players.find((p) => p.email === this.currentUser?.email)
+        );
         this.showAlert = !this.isCurrentPlayerInvited;
         this.$refs.nuzlockeTable.selectedGame = PokemonGens.names[this.selectedSheet];
         this.$refs.nuzlockeTable.loadingData = false;

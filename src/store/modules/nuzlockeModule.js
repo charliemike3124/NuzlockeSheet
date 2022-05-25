@@ -11,6 +11,7 @@ const state = {
     sheetDataList: SheetDataList(),
     selectedGame: "",
     selectedSheet: 0,
+    isCurrentPlayerInvited: true,
 };
 
 const mutations = {
@@ -18,6 +19,7 @@ const mutations = {
     setSheetDataList: MutationsHelper.set("sheetDataList"),
     setSheetGame: MutationsHelper.set("selectedGame"),
     setSelectedSheet: MutationsHelper.set("selectedSheet"),
+    setIsCurrentPlayerInvited: MutationsHelper.set("isCurrentPlayerInvited"),
 };
 
 const actions = {
@@ -123,24 +125,6 @@ const actions = {
         dispatch("SetSheetData", [result, rootState.sheets.currentDocumentId]);
     },
 
-    /* Clears pokemon from a specific row in the selected sheet */
-    ClearSheetRow({ dispatch, state, rootState }, item) {
-        let result = state.sheetData;
-        const index = result.rows.indexOf(item);
-        let clearedRow = {};
-        Object.keys(result.rows[index]).map(() => {
-            clearedRow = {
-                location: result.rows[index].location,
-                actions: result.rows[index].actions,
-            };
-            state.sheetDataList.players.forEach((player) => {
-                clearedRow[player.name] = "";
-            });
-        });
-        result.rows[index] = clearedRow;
-        dispatch("SetSheetData", [result, rootState.sheets.currentDocumentId]);
-    },
-
     /* Adds an empty row below the given index row */
     AddCustomRow({ state, dispatch, rootState }, selectedRow) {
         //Add properties according to which players exist.
@@ -243,6 +227,8 @@ const actions = {
                 root: true,
             });
         }
+        commit("setSheetDataList", sheetDataList);
+        dispatch("SetSheetData", [sheetDataList.dataSheets[state.selectedSheet]]);
         return !!sheetDataList ? true : Constants.JOIN_SHEET_ERRORS.DOES_NOT_EXIST;
     },
 
@@ -260,6 +246,10 @@ const actions = {
             return result;
         });
         dispatch("SetSheetData", [sheetData, rootState.sheets.currentDocumentId]);
+    },
+
+    SetIsCurrentPlayerInvited({ commit }, value) {
+        commit("setIsCurrentPlayerInvited", value);
     },
 };
 

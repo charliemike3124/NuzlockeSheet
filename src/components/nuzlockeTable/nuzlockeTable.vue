@@ -1,7 +1,7 @@
 <template>
     <v-data-table
-        :headers="data.headers"
-        :items="data.rows"
+        :headers="sheetData.headers"
+        :items="sheetData.rows"
         :show-select="false"
         :loading="loadingData"
         :item-class="itemClass"
@@ -50,7 +50,7 @@
         <template v-slot:item.location="{ item }">
             <a
                 v-if="!item.location.isCustom"
-                :href="`${bulbapediaBaseURL}/${item.location.name}`"
+                :href="`${GeneralHelpers.getBulbapediaBaseUrl()}/${item.location.name}`"
                 target="_blank"
             >
                 {{ item.location.name }}
@@ -59,38 +59,12 @@
         </template>
 
         <!--Player Rows-->
-        <template v-for="prop in playerHeaders" v-slot:[`item.${prop.value}`]="{ item }">
-            <v-autocomplete
-                ref="autoComplete"
-                item-text="name"
-                dense
-                hide-details
-                :items="pokemonList"
-                :value="getSelectedPokemon(item[`${prop.value}`])"
-                :disabled="!isCurrentPlayerInvited"
-                @change="onPokemonSelect($event, prop.value, item)"
-            >
-                <template v-slot:selection="data">
-                    <div v-if="!!item[`${prop.value}`]" class="pokemon-row d-inline-block">
-                        <img :src="item[`${prop.value}`].sprite" />
-                    </div>
-                    <div class="d-inline-block">
-                        <span v-bind="data.attrs">
-                            {{ data.item.name }}
-                            {{ data.item.nickname ? `(${data.item.nickname})` : "" }}
-                        </span>
-                        <div v-if="!!item[`${prop.value}`]">
-                            <CVTooltip
-                                :text="type.type.name"
-                                v-for="(type, index) in item[`${prop.value}`].types"
-                                :key="index"
-                            >
-                                <img :src="GeneralHelpers.requireImage(`types_icons/${type.type.name}.png`)" />
-                            </CVTooltip>
-                        </div>
-                    </div>
-                </template>
-            </v-autocomplete>
+        <template v-for="(prop, index) in playerHeaders" v-slot:[`item.${prop.value}`]="{ item }">
+            <PokemonSelect
+                @onPokemonSelect="onPokemonSelect"
+                v-bind="{ item, prop }"
+                :key="index"
+            ></PokemonSelect>
         </template>
 
         <!--Action Rows-->
@@ -102,16 +76,21 @@
                         !isCurrentPlayerInvited
                             ? true
                             : !!action.disabled
-                            ? action.disabled(data, item)
+                            ? action.disabled(item)
                             : false
                     "
                     small
-                    @click="action.actionParams ? action.action(item, action.actionParams) : action.action(item)"
+                    @click="
+                        action.actionParams
+                            ? action.action(item, action.actionParams)
+                            : action.action(item)
+                    "
                 >
-                    {{ action.icon }} 
+                    {{ action.icon }}
                 </v-icon>
             </CVTooltip>
         </template>
+
         <!--Displayed when there is no data-->
         <template v-slot:no-data>
             <span>Add some routes to this sheet!</span>
@@ -121,31 +100,24 @@
 
 <script>
 import { mapActions, mapState } from "vuex";
-import { PokemonGens, Constants } from "../resources/constants";
+import { PokemonGens, Constants } from "../../resources/constants";
 import { CVTooltip } from "@/components/common";
+import PokemonSelect from "./pokemonSelect.vue";
 export default {
     name: "NuzlockeTable",
-    components: { CVTooltip },
-    props: {
-        data: {
-            required: true,
-            default: () => {},
-        },
-        isCurrentPlayerInvited: Boolean,
-    },
+    components: { CVTooltip, PokemonSelect },
     computed: {
         ...mapState("pokemon", ["pokemonList"]),
-        ...mapState("nuzlocke", ["sheetDataList"]),
-        ...mapState("sheets", ["currentDocumentId", "currentUser"]),
-        
+        ...mapState("nuzlocke", ["isCurrentPlayerInvited", "sheetData"]),
+        ...mapState("sheets", ["currentDocumentId"]),
+
         playerHeaders() {
-            return this.data.headers.filter((item) => item.isPlayer);
+            return this.sheetData.headers.filter((item) => item.isPlayer);
         },
     },
-    data(){ 
+    data() {
         return {
             loadingData: false,
-            bulbapediaBaseURL: "https://bulbapedia.bulbagarden.net/wiki",
             pokemonGames: PokemonGens.names,
             selectedGame: PokemonGens.names[0],
             topActions: [
@@ -154,7 +126,7 @@ export default {
                     icon: "mdi-eraser",
                     tooltip: "Reset sheet (Only Pokemon)",
                     toggleColor: "",
-                    eventHandler: this.eventHandler,
+                    eventHandler: this.resetSheet,
                 },
                 {
                     name: "managePlayers",
@@ -187,15 +159,17 @@ export default {
                     action: this.addRow,
                 },
                 {
-                    tooltip: "Clear Row",
-                    icon: "mdi-eraser",
-                    action: this.clearItem,
+                    tooltip: "Delete Row",
+                    icon: "mdi-delete",
+                    action: this.deleteItem,
+                    disabled: (item) => !item.location.isCustom,
                 },
             ],
             tableOptions: {
                 itemsPerPage: 15,
             },
-    }},
+        };
+    },
 
     methods: {
         ...mapActions("nuzlocke", [
@@ -204,7 +178,6 @@ export default {
             "AddCustomRow",
             "SetSheetGame",
             "ResetCurrentSheet",
-            "ClearSheetRow",
         ]),
         ...mapActions("pokemon", ["UpdatePokemonListByNameAsync"]),
 
@@ -222,73 +195,40 @@ export default {
             this.AddCustomRow(selectedRow);
         },
 
-        clearItem(item) {
-            this.ClearSheetRow(item);
-        },
-
         deleteItem(item) {
             this.RemoveSheetDataItem(item);
         },
 
         setRowStatus(item, status) {
-            let sheetData = this.GeneralHelpers.deepCopy(this.data);
-            const index = this.data.rows.indexOf(item);
+            let sheetData = this.GeneralHelpers.deepCopy(this.sheetData);
+            const index = this.sheetData.rows.indexOf(item);
             sheetData.rows[index].rowStatus =
                 sheetData.rows[index].rowStatus === status ? "" : status;
             this.SetSheetData([sheetData, this.currentDocumentId]);
         },
-        
+
         async onSelectGame() {
             this.SetSheetGame(this.selectedGame);
         },
-        
-        showPokemonData(item) {
-            window.open(`${this.bulbapediaBaseURL}/${item.name}`, "_blank");
-        },
-        
+
         resetSheet() {
             //TODO - show confirmation dialog and add reset logic (only erases player pokemon)
             this.ResetCurrentSheet();
         },
-        
-        async onPokemonSelect(name, prop, row) {
+
+        async onPokemonSelect([name, prop, row]) {
             let pokemon;
             if (name) {
                 pokemon = await this.UpdatePokemonListByNameAsync(name);
             }
-            let sheetData = JSON.parse(JSON.stringify(this.data));
-            const index = this.data.rows.indexOf(row);
-            sheetData.rows[index][prop] = pokemon;
+            let sheetData = this.GeneralHelpers.deepCopy(this.sheetData);
+            const index = this.sheetData.rows.indexOf(row);
+            sheetData.rows[index][prop] = pokemon || null;
             this.SetSheetData([sheetData, this.currentDocumentId]);
         },
-        
-        getSelectedPokemon(pokemon) {
-            return this.pokemonList.find((pok) => pok.name === pokemon?.name);
-        },
-        
+
         managePlayers() {
             this.$emit("managePlayers");
-        },
-        
-        removeInputAutocomplete() {
-            if (this.$refs?.autoComplete?.length) {
-                for (const ref of this.$refs.autoComplete) {
-                    let input = ref?.$el.querySelector("input");
-                    input.autocomplete = false;
-                }
-            }
-        },
-    },
-    watch: {
-        loadingData(val) {
-            this.$nextTick(() => {
-                setTimeout(() => {
-                    //-- Called when data finishes loading.
-                    if (!val && this.$refs?.autoComplete?.length) {
-                        this.removeInputAutocomplete();
-                    }
-                }, 1000);
-            });
         },
     },
 };
@@ -298,15 +238,6 @@ export default {
 .v-input__slot {
     &::before {
         border-color: transparent !important;
-    }
-}
-.pokemon-row {
-    padding: 5px 0;
-    img {
-        transform: scale(2.5);
-        margin-right: 20px;
-        margin-bottom: 5px;
-        width: 25px;
     }
 }
 .icon-active {
