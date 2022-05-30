@@ -62,6 +62,7 @@ const routes = [
         "Victory Road",
         "Cerulean Cave",
     ],
+
     //--Gold / Silver / Crystal--//
     [
         "Starter",
@@ -152,6 +153,7 @@ const routes = [
         "Route 28",
         "Mt. Silver",
     ],
+
     //--Ruby / Sapphire / Emerald--//
     [
         "Starter",
@@ -225,6 +227,7 @@ const routes = [
         "Battle Frontier",
         "Artisan Cave",
     ],
+
     //--FireRed / LeafGreen--//
     [
         "Starter",
@@ -298,6 +301,7 @@ const routes = [
         "Tanoby Ruins",
         "Cerulean Cave",
     ],
+
     //--Diamond / Pearl / Platinum--//
     [
         "Starter",
@@ -375,6 +379,7 @@ const routes = [
         "Flower Paradise",
         "Hall of Origin",
     ],
+
     //--HeartGold / SoulSilver--//
     [
         "Starter",
@@ -475,14 +480,85 @@ const routes = [
     ],
     //--Black / White--//
     [],
+
     //--Black 2 / White 2--//
-    [],
+    [
+        "Starter",
+        "Aspertia City",
+        "Route 19",
+        "Floccesy Town",
+        "Route 20",
+        "Floccesy Ranch",
+        "Aspertia Gym",
+        "Virbank City",
+        "Virbank Complex",
+        "Castelia City",
+        "Castelia Sewers",
+        "Relic Passage",
+        "Route 4",
+        "Desert Resort",
+        "Relic Castle",
+        "Route 16",
+        "Lostlorn Forest",
+        "Route 5",
+        "Driftveil Drawbridge",
+        "Driftveil City",
+        "Route 6",
+        "Mistralton Cave",
+        "Chargestone Cave",
+        "Route 7",
+        "Celestial Tower",
+        "Reversal Mountain",
+        "Strange House",
+        "Undella Town",
+        "Undella Bay",
+        "Route 13",
+        "Route 12",
+        "Village Bridge",
+        "Route 11",
+        "Route 9",
+        "Seaside Cave",
+        "Route 21",
+        "Humilau City",
+        "Route 22",
+        "Giant Chasm",
+        "Route 23",
+        "Victory Road",
+        "Old Victory Road",
+        "Marvelous Bridge",
+        "Route 15",
+        "Route 14",
+        "Abundant Shrine",
+        "Moor of Icirrus",
+        "Icirrus City",
+        "Dragonspiral Tower",
+        "Twist Mountain",
+        "Clay Tunnel",
+        "Underground Ruins",
+        "Pinwheel Forest",
+        "Nacrene City",
+        "Route 3",
+        "Wellspring Cave",
+        "Striaton City",
+        "Dreamyard",
+        "Route 2",
+        "Accumula Town",
+        "Route 1",
+        "Route 17",
+        "Route 18",
+        "P2 Laboratory",
+        "Nature Preserve",
+    ],
+
     //--X / Y--//
     [],
+
     //--OmegaRuby / AlphaSapphire--//
     [],
+
     //--Sun / Moon--//
     [],
+
     //--Ultra Sun / Ultra Moon--//
     [
         "Starter",
@@ -557,6 +633,7 @@ const routes = [
         "Ruins of Abundance",
         "Ruins of Hope",
     ],
+
     //--Sword and Shield--//
     [],
 ];
