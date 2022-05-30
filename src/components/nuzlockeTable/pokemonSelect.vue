@@ -21,16 +21,21 @@
                 <div class="d-inline-block">
                     <div>
                         <span v-bind="data.attrs" v-if="!editingNickname">
-                            {{ data.item.name }}
-                            {{ data.item.nickname ? `(${data.item.nickname})` : "" }}
+                            {{
+                                item[`${prop.value}`].nickname
+                                    ? item[`${prop.value}`].nickname
+                                    : data.item.name
+                            }}
                         </span>
-                        <v-icon
-                            small
-                            class="edit-name"
-                            @click.prevent.stop="onEditPokemonName(item, prop.value)"
-                        >
-                            mdi-pencil
-                        </v-icon>
+                        <CVTooltip :text="'Edit nickname'">
+                            <v-icon
+                                small
+                                class="edit-name"
+                                @click.prevent.stop="onEditPokemonName(item, prop.value)"
+                            >
+                                mdi-pencil
+                            </v-icon>
+                        </CVTooltip>
                     </div>
                     <div v-if="!!item[`${prop.value}`]">
                         <CVTooltip
@@ -58,7 +63,13 @@
             hide-details
             autofocus
             @keydown.enter="editPokemonName(item, prop.value)"
-        ></v-text-field>
+        >
+            <template v-slot:append-outer>
+                <v-icon @click="editPokemonName(item, prop.value)" size="25" color="primary">
+                    mdi-check
+                </v-icon>
+            </template>
+        </v-text-field>
     </div>
 </template>
 
@@ -74,7 +85,8 @@ export default {
     },
     computed: {
         ...mapState("pokemon", ["pokemonList"]),
-        ...mapState("nuzlocke", ["isCurrentPlayerInvited", "sheetData"]),
+        ...mapState("nuzlocke", ["isCurrentPlayerInvited", "sheetData", "currentDocumentId"]),
+        ...mapState("sheets", ["currentDocumentId"]),
     },
 
     data() {
@@ -85,7 +97,7 @@ export default {
     },
 
     methods: {
-        ...mapState("nuzlocke", ["SetSheetData"]),
+        ...mapActions("nuzlocke", ["SetSheetData"]),
 
         getSelectedPokemon(pokemon) {
             return this.pokemonList.find((pok) => pok.name === pokemon?.name);
@@ -106,11 +118,9 @@ export default {
         },
 
         editPokemonName(item, prop) {
-            let sheetData = this.GeneralHelpers.deepCopy(this.sheetData);
             const sheetIndex = this.sheetData.rows.indexOf(item);
-            let newItem = sheetData.rows[sheetIndex];
-            newItem[prop].nickname = this.pokemonNickname;
-            sheetData.rows[sheetIndex][prop] = newItem || null;
+            let sheetData = this.GeneralHelpers.deepCopy(this.sheetData);
+            sheetData.rows[sheetIndex][prop].nickname = this.pokemonNickname;
             this.SetSheetData([sheetData, this.currentDocumentId]);
             this.editingNickname = false;
         },
@@ -139,14 +149,18 @@ export default {
         width: 25px;
         z-index: 1001;
         cursor: pointer;
+        transition-duration: 250ms;
+        &:hover {
+            transform: scale(2.75);
+        }
     }
 }
 
 .edit-name {
-    z-index: 1001;
+    z-index: 1;
     cursor: pointer;
 }
 .nickname-input {
-    z-index: 1001;
+    z-index: 1;
 }
 </style>

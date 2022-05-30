@@ -39,9 +39,9 @@ const actions = {
             let sheetDataList = state.sheetDataList;
             sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
             Database.UpdateSheet(sheetDataList, documentId);
-            localStorage.setItem(storageKeys.sheetDataList, JSON.stringify(sheetDataList));
             commit("setSheetDataList", sheetDataList);
         } else {
+            localStorage.setItem(storageKeys.sheetDataList, JSON.stringify(sheetDataList));
         }
     },
 
