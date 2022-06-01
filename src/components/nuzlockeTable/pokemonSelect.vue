@@ -21,11 +21,7 @@
                 <div class="d-inline-block">
                     <div>
                         <span v-bind="data.attrs" v-if="!editingNickname">
-                            {{
-                                item[`${prop.value}`].nickname
-                                    ? item[`${prop.value}`].nickname
-                                    : data.item.name
-                            }}
+                            {{ buildPokemonName(item[`${prop.value}`]) }}
                         </span>
                         <CVTooltip :text="'Edit nickname'">
                             <v-icon
@@ -76,6 +72,7 @@
 <script>
 import { CVTooltip } from "@/components/common";
 import { mapState, mapActions } from "vuex";
+import pokemonModule from "../../store/modules/pokemonModule";
 export default {
     name: "pokemonSelect",
     components: { CVTooltip },
@@ -130,6 +127,14 @@ export default {
                 let input = ref?.$el.querySelector("input");
                 input.autocomplete = false;
             }
+        },
+
+        buildPokemonName(pokemon) {
+            let name = pokemon.name;
+            if ("nickname" in pokemon) {
+                name = pokemon.nickname ? pokemon.nickname : pokemon.name;
+            }
+            return name;
         },
     },
 

@@ -200,7 +200,6 @@ export default {
         },
 
         setRowStatus(item, status) {
-            console.log(status);
             let sheetData = this.GeneralHelpers.deepCopy(this.sheetData);
             const index = this.sheetData.rows.indexOf(item);
             sheetData.rows[index].rowStatus =

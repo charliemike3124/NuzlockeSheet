@@ -41,7 +41,7 @@ const actions = {
             Database.UpdateSheet(sheetDataList, documentId);
             commit("setSheetDataList", sheetDataList);
         } else {
-            localStorage.setItem(storageKeys.sheetDataList, JSON.stringify(sheetDataList));
+            //-- TODO: handle logged off save.
         }
     },
 
