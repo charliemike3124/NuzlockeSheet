@@ -82,7 +82,7 @@ export default {
     },
     computed: {
         ...mapState("pokemon", ["pokemonList"]),
-        ...mapState("nuzlocke", ["isCurrentPlayerInvited", "sheetData", "currentDocumentId"]),
+        ...mapState("nuzlocke", ["isCurrentPlayerInvited", "sheetDataList", "currentDocumentId"]),
         ...mapState("sheets", ["currentDocumentId"]),
     },
 
@@ -115,8 +115,8 @@ export default {
         },
 
         editPokemonName(item, prop) {
-            const sheetIndex = this.sheetData.rows.indexOf(item);
-            let sheetData = this.GeneralHelpers.deepCopy(this.sheetData);
+            const sheetIndex = this.sheetDataList.sheetData.rows.indexOf(item);
+            let sheetData = this.GeneralHelpers.deepCopy(this.sheetDataList.sheetData);
             sheetData.rows[sheetIndex][prop].nickname = this.pokemonNickname;
             this.SetSheetData([sheetData, this.currentDocumentId]);
             this.editingNickname = false;
@@ -130,11 +130,13 @@ export default {
         },
 
         buildPokemonName(pokemon) {
-            let name = pokemon.name;
-            if ("nickname" in pokemon) {
-                name = pokemon.nickname ? pokemon.nickname : pokemon.name;
+            if (pokemon) {
+                let name = pokemon.name;
+                if ("nickname" in pokemon) {
+                    name = pokemon.nickname ? pokemon.nickname : pokemon.name;
+                }
+                return name;
             }
-            return name;
         },
     },
 

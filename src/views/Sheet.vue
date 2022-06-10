@@ -151,12 +151,7 @@ export default {
     },
 
     methods: {
-        ...mapActions("nuzlocke", [
-            "JoinSheet",
-            "SetPlayers",
-            "GetSelectedSheet",
-            "SetIsCurrentPlayerInvited",
-        ]),
+        ...mapActions("nuzlocke", ["JoinSheet", "SetPlayers", "SetIsCurrentPlayerInvited"]),
         ...mapActions("pokemon", ["SetPokemonListAsync"]),
         ...mapActions("sheets", ["SetCurrentUser", "SetCurrentDocumentId"]),
         showDialog(title) {
@@ -198,7 +193,6 @@ export default {
         //-- End Event Handlers --//
     },
     created() {
-        this.GetSelectedSheet();
         this.SetCurrentDocumentId(this.$route.params.code);
     },
     async mounted() {
@@ -207,7 +201,7 @@ export default {
             FirebaseAuth.CheckForSignedInUser(this.SetCurrentUser),
             this.SetPokemonListAsync(),
         ]);
-        const isSheetInitialized = this.sheetDataList.dataSheets.length;
+        const isSheetInitialized = this.sheetDataList.sheetData.title;
         if (!isSheetInitialized) {
             const dataExists = await this.JoinSheet(this.currentDocumentId);
             if (!dataExists) {

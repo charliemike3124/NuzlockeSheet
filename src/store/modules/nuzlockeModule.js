@@ -4,44 +4,29 @@ import Database from "@/services/FirebaseDatabase";
 import { SavedSheet, SheetDataList } from "../../resources/models";
 
 const state = {
-    sheetData: {
-        headers: [],
-        rows: [],
-    },
     sheetDataList: SheetDataList(),
-    selectedGame: "",
-    selectedSheet: 0,
     isCurrentPlayerInvited: true,
 };
 
 const mutations = {
     setSheetData: MutationsHelper.set("sheetData"),
     setSheetDataList: MutationsHelper.set("sheetDataList"),
-    setSheetGame: MutationsHelper.set("selectedGame"),
-    setSelectedSheet: MutationsHelper.set("selectedSheet"),
     setIsCurrentPlayerInvited: MutationsHelper.set("isCurrentPlayerInvited"),
 };
 
 const actions = {
     /* Updates current sheet */
-    SetSheetData({ commit, dispatch }, [sheetData, documentId = null]) {
-        commit("setSheetData", sheetData);
+    SetSheetData({ commit, rootState, state }, [sheetData, documentId = null]) {
         if (documentId) {
-            //-- Updates Firebase as well.
-            dispatch("SaveSheetData", documentId);
-        }
-    },
-
-    /* Updates current sheet in Firebase and localstorage */
-    SaveSheetData({ state, commit, rootState }, documentId) {
-        if (!!rootState.sheets.currentUser?.uid) {
-            //-- user is signed in
-            let sheetDataList = state.sheetDataList;
-            sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
-            Database.UpdateSheet(sheetDataList, documentId);
-            commit("setSheetDataList", sheetDataList);
-        } else {
-            //-- TODO: handle logged off save.
+            if (!!rootState.sheets.currentUser?.uid) {
+                //-- user is signed in
+                let sheetDataList = state.sheetDataList;
+                sheetDataList.sheetData = sheetData;
+                Database.UpdateSheet(sheetDataList, documentId);
+                commit("setSheetDataList", sheetDataList);
+            } else {
+                //-- TODO: handle logged off save.
+            }
         }
     },
 
@@ -49,75 +34,49 @@ const actions = {
     SetPlayers({ commit, state, dispatch, rootState }, players) {
         //Add player props to every sheet's header in the list.
         let sheetDataList = state.sheetDataList;
-        sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
         sheetDataList.players = players;
-        sheetDataList.dataSheets.map((sheet) => {
-            const locationHeader = sheet.headers[0];
-            const nonPlayerHeaders = sheet.headers.splice(1).filter((item) => !item.isPlayer);
-            let playerHeaders = [];
+        const locationHeader = sheetDataList.sheetData.headers[0];
+        const nonPlayerHeaders = sheetDataList.sheetData.headers
+            .splice(1)
+            .filter((item) => !item.isPlayer);
+        let playerHeaders = [];
 
-            players.forEach((player) => {
-                //If a player's name or email was editted, make the property change in the rows of all the sheets.
-                if (player.hasOwnProperty("previousName")) {
-                    sheet.rows.forEach((row) => {
-                        row[player.name] = row[player.previousName];
-                        delete row[player.previousName];
-                    });
-                    delete player.previousName;
-                }
-                if (player.hasOwnProperty("previousEmail")) {
-                    const emailIndex = sheetDataList.playerEmails.indexOf(player.previousEmail);
-                    sheetDataList.playerEmails.splice(emailIndex, 1);
-                    delete player.previousEmail;
-                }
-                playerHeaders.push({
-                    text: player.name,
-                    value: player.name,
-                    sortable: false,
-                    isPlayer: true,
+        players.forEach((player) => {
+            //If a player's name or email was editted, make the property change in the rows of all the sheets.
+            if (player.hasOwnProperty("previousName")) {
+                sheetDataList.sheetData.rows.forEach((row) => {
+                    row[player.name] = row[player.previousName];
+                    delete row[player.previousName];
                 });
-                if (!sheetDataList.playerEmails.includes(player.email)) {
-                    sheetDataList.playerEmails.push(player.email);
-                }
+                delete player.previousName;
+            }
+            if (player.hasOwnProperty("previousEmail")) {
+                const emailIndex = sheetDataList.playerEmails.indexOf(player.previousEmail);
+                sheetDataList.playerEmails.splice(emailIndex, 1);
+                delete player.previousEmail;
+            }
+            playerHeaders.push({
+                text: player.name,
+                value: player.name,
+                sortable: false,
+                isPlayer: true,
             });
-
-            let headers = [locationHeader, ...playerHeaders, ...nonPlayerHeaders];
-
-            sheet.headers = headers;
+            if (!sheetDataList.playerEmails.includes(player.email)) {
+                sheetDataList.playerEmails.push(player.email);
+            }
         });
 
-        dispatch("SetSheetData", [sheetDataList.dataSheets[state.selectedSheet]]);
-        commit("setSheetDataList", sheetDataList);
-        dispatch("SaveSheetData", rootState.sheets.currentDocumentId);
-    },
+        let headers = [locationHeader, ...playerHeaders, ...nonPlayerHeaders];
 
-    /* Sets the currently selected game (Changes current sheet view) */
-    SetSheetGame({ commit, state, dispatch }, game) {
-        commit("setSheetGame", game);
-        const index = PokemonGens.names.indexOf(game);
-        localStorage.setItem(storageKeys.selectedSheet, index);
-        commit("setSelectedSheet", game);
+        sheetDataList.sheetData.headers = headers;
 
-        let sheetDataList = state.sheetDataList;
-        sheetDataList.dataSheets[state.selectedSheet] = state.sheetData;
-
-        let selectedSheetData = state.sheetDataList.dataSheets[index];
-
-        dispatch("SetSheetData", [selectedSheetData]);
-        commit("setSelectedSheet", sheetDataList);
-    },
-
-    /* Returns the last selected sheet */
-    GetSelectedSheet({ commit }) {
-        const data = localStorage.getItem(storageKeys.selectedSheet);
-        const selectedSheet = data ? JSON.parse(data) : 0;
-        commit("setSelectedSheet", selectedSheet);
+        dispatch("SetSheetData", [sheetDataList.sheetData, rootState.sheets.currentDocumentId]);
     },
 
     /* Removes a specific row from the selected sheet */
     RemoveSheetDataItem({ dispatch, state, rootState }, item) {
         //remove row from sheetData
-        let result = state.sheetData;
+        let result = state.sheetDataList.sheetData;
         const index = result.rows.indexOf(item);
         if (index > -1) {
             result.rows.splice(index, 1);
@@ -128,7 +87,7 @@ const actions = {
     /* Adds an empty row below the given index row */
     AddCustomRow({ state, dispatch, rootState }, selectedRow) {
         //Add properties according to which players exist.
-        let result = state.sheetData;
+        let result = state.sheetDataList.sheetData;
         let row = {
             location: {
                 name: "",
@@ -151,8 +110,8 @@ const actions = {
     },
 
     /* Initialices an empty sheet data list */
-    async InitializeSheetDataList({ commit, dispatch }, [title, players]) {
-        let sheetDataList = SheetDataList(title, players);
+    async InitializeSheetDataList({ commit, dispatch }, [title, players, pokemonGame]) {
+        let sheetDataList = SheetDataList(title, players, [], pokemonGame);
         let playerHeaders = [];
         players.forEach((player) => {
             playerHeaders.push({
@@ -164,40 +123,42 @@ const actions = {
             sheetDataList.playerEmails.push(player.email);
         });
 
-        PokemonGens.routes.forEach((routeList, index) => {
-            sheetDataList.dataSheets.push({
-                headers: [
-                    {
-                        text: "Location",
-                        value: "location",
-                        sortable: false,
-                    },
-                    ...playerHeaders,
-                    {
-                        text: "Actions",
-                        value: "actions",
-                        sortable: false,
-                    },
-                ],
-                rows: [],
-            });
-            routeList.forEach((routeName) => {
-                sheetDataList.dataSheets[index].rows.push({
-                    location: {
-                        name: routeName,
-                        isCustom: false,
-                    },
-                    actions: "",
-                });
+        sheetDataList.sheetData = {
+            headers: [
+                {
+                    text: "Location",
+                    value: "location",
+                    sortable: false,
+                },
+                ...playerHeaders,
+                {
+                    text: "Actions",
+                    value: "actions",
+                    sortable: false,
+                },
+            ],
+            rows: [],
+        };
+        const genIndex = PokemonGens.names.indexOf(pokemonGame);
+        PokemonGens.routes[genIndex].forEach((routeName) => {
+            sheetDataList.sheetData.rows.push({
+                location: {
+                    name: routeName,
+                    isCustom: false,
+                },
+                actions: "",
             });
         });
-        const documentId = await Database.CreateSheet(sheetDataList);
 
         commit("setSheetDataList", sheetDataList);
-        dispatch("SetSheetData", [sheetDataList.dataSheets[0], documentId]);
-        dispatch("sheets/AddOrRemoveSavedSheet", SavedSheet(documentId, sheetDataList.title), {
-            root: true,
-        });
+        const documentId = await Database.CreateSheet(sheetDataList);
+        dispatch(
+            "sheets/AddOrRemoveSavedSheet",
+            SavedSheet(documentId, sheetDataList.title, pokemonGame),
+            {
+                root: true,
+            }
+        );
         return documentId;
     },
 
@@ -213,7 +174,6 @@ const actions = {
             sheetDataList = await Database.SubscribeToSheet((dbSheetDataList) => {
                 if (dbSheetDataList) {
                     commit("setSheetDataList", dbSheetDataList);
-                    dispatch("SetSheetData", [dbSheetDataList.dataSheets[state.selectedSheet]]);
                 }
             }, documentId);
         } else {
@@ -223,18 +183,23 @@ const actions = {
 
         if (sheetDataList) {
             //Save to local storage for user preference
-            dispatch("sheets/AddOrRemoveSavedSheet", SavedSheet(documentId, sheetDataList.title), {
-                root: true,
-            });
+            dispatch(
+                "sheets/AddOrRemoveSavedSheet",
+                SavedSheet(documentId, sheetDataList.title, sheetDataList.pokemonGame),
+                {
+                    root: true,
+                }
+            );
         }
+
         commit("setSheetDataList", sheetDataList);
-        dispatch("SetSheetData", [sheetDataList.dataSheets[state.selectedSheet]]);
+        dispatch("SetSheetData", [sheetDataList.sheetData, documentId]);
         return !!sheetDataList ? true : Constants.JOIN_SHEET_ERRORS.DOES_NOT_EXIST;
     },
 
     /* Resets the selected sheet to its initial state */
     ResetCurrentSheet({ state, dispatch, rootState }) {
-        let sheetData = state.sheetData;
+        let sheetData = state.sheetDataList.sheetData;
         sheetData.rows = sheetData.rows.map((row) => {
             let result = {
                 location: row.location,

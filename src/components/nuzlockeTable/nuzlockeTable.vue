@@ -1,7 +1,7 @@
 <template>
     <v-data-table
-        :headers="sheetData.headers"
-        :items="sheetData.rows"
+        :headers="sheetDataList.sheetData.headers"
+        :items="sheetDataList.sheetData.rows"
         :show-select="false"
         :loading="loadingData"
         :item-class="itemClass"
@@ -13,18 +13,9 @@
         <!--Header-->
         <template v-slot:top>
             <v-row class="ma-2" justify="start">
-                <v-col>
-                    <v-select
-                        class="pt-0 v-select-sm"
-                        :items="pokemonGames"
-                        :menu-props="{ top: false, offsetY: true }"
-                        v-model="selectedGame"
-                        label="Game"
-                        hide-details
-                        prepend-icon="mdi-pokeball"
-                        single-line
-                        @change="onSelectGame"
-                    ></v-select>
+                <v-col align-self="center">
+                    <v-icon>mdi-pokeball</v-icon>
+                    <span class="ml-2">{{ sheetDataList.pokemonGame }}</span>
                 </v-col>
                 <v-col>
                     <div class="d-flex justify-end">
@@ -100,7 +91,7 @@
 
 <script>
 import { mapActions, mapState } from "vuex";
-import { PokemonGens, Constants } from "../../resources/constants";
+import { Constants } from "../../resources/constants";
 import { CVTooltip } from "@/components/common";
 import PokemonSelect from "./pokemonSelect.vue";
 export default {
@@ -108,18 +99,16 @@ export default {
     components: { CVTooltip, PokemonSelect },
     computed: {
         ...mapState("pokemon", ["pokemonList"]),
-        ...mapState("nuzlocke", ["isCurrentPlayerInvited", "sheetData"]),
+        ...mapState("nuzlocke", ["isCurrentPlayerInvited", "sheetDataList"]),
         ...mapState("sheets", ["currentDocumentId"]),
 
         playerHeaders() {
-            return this.sheetData.headers.filter((item) => item.isPlayer);
+            return this.sheetDataList.sheetData.headers.filter((item) => item.isPlayer);
         },
     },
     data() {
         return {
             loadingData: false,
-            pokemonGames: PokemonGens.names,
-            selectedGame: PokemonGens.names[0],
             topActions: [
                 {
                     name: "clean",
@@ -176,7 +165,6 @@ export default {
             "SetSheetData",
             "RemoveSheetDataItem",
             "AddCustomRow",
-            "SetSheetGame",
             "ResetCurrentSheet",
         ]),
         ...mapActions("pokemon", ["UpdatePokemonListByNameAsync"]),
@@ -200,15 +188,11 @@ export default {
         },
 
         setRowStatus(item, status) {
-            let sheetData = this.GeneralHelpers.deepCopy(this.sheetData);
-            const index = this.sheetData.rows.indexOf(item);
+            let sheetData = this.GeneralHelpers.deepCopy(this.sheetDataList.sheetData);
+            const index = this.sheetDataList.sheetData.rows.indexOf(item);
             sheetData.rows[index].rowStatus =
                 sheetData.rows[index].rowStatus === status ? "" : status;
             this.SetSheetData([sheetData, this.currentDocumentId]);
-        },
-
-        async onSelectGame() {
-            this.SetSheetGame(this.selectedGame);
         },
 
         resetSheet() {
@@ -221,8 +205,8 @@ export default {
             if (name) {
                 pokemon = await this.UpdatePokemonListByNameAsync(name);
             }
-            let sheetData = this.GeneralHelpers.deepCopy(this.sheetData);
-            const index = this.sheetData.rows.indexOf(row);
+            let sheetData = this.GeneralHelpers.deepCopy(this.sheetDataList.sheetData);
+            const index = this.sheetDataList.sheetData.rows.indexOf(row);
             sheetData.rows[index][prop] = pokemon || null;
             this.SetSheetData([sheetData, this.currentDocumentId]);
         },
