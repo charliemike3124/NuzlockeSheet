@@ -52,30 +52,44 @@
                     <div v-show="cardView === VIEW_CREATE_SHEET">
                         <v-form v-model="createSheetForm.isValid" ref="createSheetForm">
                             <v-text-field
-                                class="v-input-small"
+                                class="v-input-small mb-2"
                                 v-model="createSheetForm.name"
                                 outlined
                                 label="Your name"
                                 :rules="createSheetForm.nameRules"
+                                prepend-icon="mdi-account"
                                 required
                             ></v-text-field>
                             <v-text-field
-                                class="v-input-small"
+                                class="v-input-small mb-2"
                                 v-model="createSheetForm.title"
                                 outlined
                                 label="Sheet title"
                                 :rules="createSheetForm.titleRules"
+                                prepend-icon="mdi-pencil-box-outline"
                                 required
                             ></v-text-field>
+                            <v-select
+                                class="v-input-small mb-2"
+                                v-model="createSheetForm.pokemonGen"
+                                :items="pokemonGames"
+                                :menu-props="{ top: false, offsetY: true }"
+                                prepend-icon="mdi-pokeball"
+                                label="Pokémon Game"
+                                :rules="createSheetForm.pokemonGenRules"
+                                outlined
+                                required
+                            ></v-select>
                             <div class="d-flex justify-space-between">
+                                <v-btn @click="setCardView(VIEW_MAIN)">Back</v-btn>
                                 <v-btn
                                     :disabled="!createSheetForm.isValid"
                                     :loading="creatingSheet"
                                     @click="createSheet"
+                                    color="primary"
                                 >
                                     Create
                                 </v-btn>
-                                <v-btn @click="setCardView(VIEW_MAIN)">Back</v-btn>
                             </div>
                         </v-form>
                     </div>
@@ -130,7 +144,7 @@
 import FirebaseAuth from "@/services/FirebaseAuth";
 import { mapState, mapActions } from "vuex";
 import { User } from "../resources/models";
-import { Constants } from "../resources/constants";
+import { Constants, PokemonGens } from "../resources/constants";
 
 export default {
     name: "Home",
@@ -138,49 +152,51 @@ export default {
         ...mapState("sheets", ["savedSheets", "currentUser"]),
     },
 
-    data: () => ({
-        isSigningIn: false,
-        cardView: "main",
-        VIEW_MAIN: "main",
-        VIEW_CREATE_SHEET: "createSheet",
-        VIEW_JOIN_SHEET: "joinSheet",
-        createSheetForm: {
-            isValid: false,
-            title: "",
-            titleRules: [
-                (v) => !!v || "Enter a title!",
-                (v) => v.length > 3 || "Enter a longer title!",
-            ],
-            name: "",
-            nameRules: [(v) => !!v || "Enter a name!"],
-        },
-        joinSheetForm: {
-            isValid: false,
-            code: "",
-            codeRules: [(v) => !!v || "Enter a Code!"],
-            error: false,
-            JOIN_TRY_DELAY: 3000,
-        },
-        joiningSheet: false,
-        creatingSheet: false,
-        newSheetTitle: "",
-        snackbar: {
-            show: false,
-            text: "",
-            color: "",
-        },
-        authProviders: {
-            google: Constants.AUTH_PROVIDERS.GOOGLE,
-            facebook: Constants.AUTH_PROVIDERS.FACEBOOK,
-            twitter: Constants.AUTH_PROVIDERS.TWITTER,
-            email: Constants.AUTH_PROVIDERS.EMAIL,
-        },
-    }),
+    data() {
+        return {
+            isSigningIn: false,
+            cardView: "main",
+            VIEW_MAIN: "main",
+            VIEW_CREATE_SHEET: "createSheet",
+            VIEW_JOIN_SHEET: "joinSheet",
+            pokemonGames: PokemonGens.names,
+            createSheetForm: {
+                isValid: false,
+                title: "",
+                titleRules: [(v) => !!v || "Enter a title!"],
+                name: "",
+                nameRules: [(v) => !!v || "Enter a name!"],
+                pokemonGen: PokemonGens.names[0],
+                pokemonGenRules: [(v) => !!v || "Select a game!"],
+            },
+            joinSheetForm: {
+                isValid: false,
+                code: "",
+                codeRules: [(v) => !!v || "Enter a Code!"],
+                error: false,
+                JOIN_TRY_DELAY: 3000,
+            },
+            joiningSheet: false,
+            creatingSheet: false,
+            newSheetTitle: "",
+            snackbar: {
+                show: false,
+                text: "",
+                color: "",
+            },
+            authProviders: {
+                google: Constants.AUTH_PROVIDERS.GOOGLE,
+                facebook: Constants.AUTH_PROVIDERS.FACEBOOK,
+                twitter: Constants.AUTH_PROVIDERS.TWITTER,
+                email: Constants.AUTH_PROVIDERS.EMAIL,
+            },
+        };
+    },
 
     methods: {
         ...mapActions("sheets", ["LoadSavedSheets", "SetCurrentUser"]),
         ...mapActions("nuzlocke", ["InitializeSheetDataList", "JoinSheet"]),
-        
+
         async createSheet() {
             this.creatingSheet = true;
             const documentId = await this.InitializeSheetDataList([
@@ -193,13 +209,14 @@ export default {
                         this.currentUser?.photoURL
                     ),
                 ],
+                this.createSheetForm.pokemonGen,
             ]);
             this.$router.push({
                 name: "Sheet",
                 params: { code: documentId },
             });
         },
-        
+
         async joinSheet() {
             this.joiningSheet = true;
             const sheetExists = await this.JoinSheet(this.joinSheetForm.code);
@@ -215,7 +232,7 @@ export default {
             }
             this.joiningSheet = false;
         },
-        
+
         async onSignInOrOffBtn(fromJoinSheetBtn = false, authProvider) {
             this.isSigningIn = true;
             if (!this.currentUser) {
@@ -234,7 +251,7 @@ export default {
             }
             this.isSigningIn = false;
         },
-        
+
         setCardView(view) {
             if (view === this.VIEW_JOIN_SHEET && !this.currentUser) {
                 this.showSnackbar("Sign in first before joining a sheet!");
@@ -245,7 +262,7 @@ export default {
                 }, 300);
             }
         },
-        
+
         showSnackbar(text) {
             this.snackbar.show = true;
             this.snackbar.text = text;

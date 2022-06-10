@@ -1,7 +1,8 @@
-export default function SavedSheet(code = null, title = null) {
+export default function SavedSheet(code = "", title = "", pokemonGame = "") {
     return {
         code: code,
         title: title,
-        sheetUrl: `localhost:8080/#/${code}`,
+        pokemonGame,
+        sheetUrl: `localhost:8080/${code}`,
     };
 }

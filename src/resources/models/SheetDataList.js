@@ -2,14 +2,19 @@ export default function SheetDataList(
     title = "",
     players = [],
     playerEmails = [],
-    dataSheets = [],
+    pokemonGame = "",
+    sheetData = {
+        headers: [],
+        rows: [],
+    },
     isPrivate = false
 ) {
     return {
         title: title,
         players: players,
         playerEmails: playerEmails,
-        dataSheets: dataSheets,
+        pokemonGame: pokemonGame,
+        sheetData: sheetData,
         isPrivate: isPrivate,
     };
 }
