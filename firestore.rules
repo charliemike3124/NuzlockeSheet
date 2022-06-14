@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {       
+      allow update, delete: if
+      	 isSignedIn()
+         //&& request.auth.email in existingData().playerEmails;
+      allow create: if true
+      allow read, write: if true;
+      	
+        
+      ///-- Functions --//
+      function isSignedIn(){
+      	return request.auth != null;
+      }
+      
+      function isEmailVerified(){
+      	return request.auth.token.email_verified;
+      }
+      
+      function incomingData(){
+      	return request.resource.data;
+      }
+      
+      function existingData(){
+      	return resource.data;
+      }
+      		
+    }
+  }
+}
