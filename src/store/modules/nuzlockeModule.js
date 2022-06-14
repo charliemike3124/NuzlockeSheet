@@ -9,7 +9,6 @@ const state = {
 };
 
 const mutations = {
-    setSheetData: MutationsHelper.set("sheetData"),
     setSheetDataList: MutationsHelper.set("sheetDataList"),
     setIsCurrentPlayerInvited: MutationsHelper.set("isCurrentPlayerInvited"),
 };
