@@ -7,10 +7,11 @@
             <v-card-text class="card-body">
                 <v-scroll-x-reverse-transition>
                     <div v-show="cardView === VIEW_MAIN">
-                        <div>
+                        <div class="mb-3"> Keep track of your<strong> Nuzlockes</strong> and <strong>Soulinks</strong>!</div>
+                        <div v-if="currentUser">
                             <v-btn @click="setCardView(VIEW_CREATE_SHEET)">Create Sheet</v-btn>
                         </div>
-                        <div>
+                        <div v-if="currentUser">
                             <v-btn @click="setCardView(VIEW_JOIN_SHEET)">Join Sheet</v-btn>
                         </div>
                         <div>
@@ -34,7 +35,7 @@
                             </div>
                         </div>
                         <div class="mt-12">
-                            <strong>Made by -</strong>
+                            <strong>Made by</strong>
                             <v-btn
                                 icon
                                 href="https://www.linkedin.com/in/cvillalobosgtz/"
@@ -42,6 +43,7 @@
                             >
                                 <v-icon>mdi-linkedin</v-icon>
                             </v-btn>
+                            -
                             <v-btn icon href="https://github.com/charliemike3124" target="_blank">
                                 <v-icon>mdi-github</v-icon>
                             </v-btn>
