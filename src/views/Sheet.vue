@@ -153,7 +153,7 @@ export default {
     methods: {
         ...mapActions("nuzlocke", ["JoinSheet", "SetPlayers", "SetIsCurrentPlayerInvited"]),
         ...mapActions("pokemon", ["SetPokemonListAsync"]),
-        ...mapActions("sheets", ["SetCurrentUser", "SetCurrentDocumentId"]),
+        ...mapActions("sheets", ["SetCurrentUser", "SetCurrentDocumentId", "LoadUserPreferences"]),
         showDialog(title) {
             this.dialog.show = true;
             this.dialog.title = title;
@@ -201,7 +201,8 @@ export default {
             FirebaseAuth.CheckForSignedInUser(this.SetCurrentUser),
             this.SetPokemonListAsync(),
         ]);
-        const isSheetInitialized = this.sheetDataList.sheetData.title;
+        await this.LoadUserPreferences();
+        const isSheetInitialized = !!this.sheetDataList.title;
         if (!isSheetInitialized) {
             const dataExists = await this.JoinSheet(this.currentDocumentId);
             if (!dataExists) {

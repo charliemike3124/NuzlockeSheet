@@ -1,29 +1,53 @@
 import { MutationsHelper } from "@/store/helper";
+import UserPreferencesService from "../../services/FirebaseUserPreferences";
 
+UserPreferencesService;
 const state = {
-    savedSheets: [],
+    userPreference: {},
     currentUser: null,
     currentDocumentId: null,
 };
 
 const mutations = {
-    addOrRemoveSavedSheet: MutationsHelper.addOrRemove("savedSheets"),
-    setSavedSheet: MutationsHelper.set("savedSheets"),
+    setUserPrefence: MutationsHelper.set("userPreference"),
     setCurrentUser: MutationsHelper.set("currentUser"),
     setCurrentDocumentId: MutationsHelper.set("currentDocumentId"),
 };
 
 const actions = {
     AddOrRemoveSavedSheet({ commit, state }, sheetMetaData) {
-        commit("addOrRemoveSavedSheet", sheetMetaData);
-        localStorage.setItem(storageKeys.savedSheets, JSON.stringify(state.savedSheets));
-        //agregar en firebase
+        if (state.userPreference) {
+            const sheetExists = state.userPreference?.savedSheets?.find(
+                (item) => item.code === sheetMetaData.code
+            );
+            if (!sheetExists) {
+                let savedSheets = state.userPreference.savedSheets;
+                savedSheets.push(sheetMetaData);
+                let userPreference = {
+                    ...userPreference,
+                    userId: state.currentUser.uid,
+                    savedSheets,
+                };
+                UserPreferencesService.CreateUserPreference(userPreference);
+                commit("setUserPrefence", userPreference);
+            }
+        } else {
+            let userPreference = {
+                userId: state.currentUser.uid,
+                savedSheets: [sheetMetaData],
+            };
+            UserPreferencesService.CreateUserPreference(userPreference);
+            commit("setUserPrefence", userPreference);
+        }
     },
-    LoadSavedSheets({ commit }) {
-        const data = localStorage.getItem(storageKeys.savedSheets);
-        let savedSheets = data != "undefined" || !data ? JSON.parse(data) : null;
-        commit("setSavedSheet", savedSheets);
+    async LoadUserPreferences({ commit, state }) {
         // traerse de firebase
+        if (state.currentUser) {
+            const userPrefData = await UserPreferencesService.GetUserPreferences(
+                state.currentUser.uid
+            );
+            commit("setUserPrefence", userPrefData);
+        }
     },
     SetCurrentUser({ commit }, user) {
         commit("setCurrentUser", user);
