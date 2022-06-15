@@ -17,11 +17,13 @@ const actions = {
     AddOrRemoveSavedSheet({ commit, state }, sheetMetaData) {
         commit("addOrRemoveSavedSheet", sheetMetaData);
         localStorage.setItem(storageKeys.savedSheets, JSON.stringify(state.savedSheets));
+        //agregar en firebase
     },
     LoadSavedSheets({ commit }) {
         const data = localStorage.getItem(storageKeys.savedSheets);
         let savedSheets = data != "undefined" || !data ? JSON.parse(data) : null;
         commit("setSavedSheet", savedSheets);
+        // traerse de firebase
     },
     SetCurrentUser({ commit }, user) {
         commit("setCurrentUser", user);
