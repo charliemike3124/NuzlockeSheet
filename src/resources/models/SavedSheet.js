@@ -3,6 +3,6 @@ export default function SavedSheet(code = "", title = "", pokemonGame = "") {
         code: code,
         title: title,
         pokemonGame,
-        sheetUrl: `localhost:8080/${code}`,
+        sheetUrl: `https://nuzlockesheets.com/Sheet/${code}`,
     };
 }

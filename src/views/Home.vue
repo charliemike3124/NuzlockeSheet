@@ -7,7 +7,13 @@
             <v-card-text class="card-body">
                 <v-scroll-x-reverse-transition>
                     <div v-show="cardView === VIEW_MAIN">
-                        <div class="mb-3"> Keep track of your<strong> Nuzlockes</strong> and <strong>Soulinks</strong>!</div>
+                        <div class="mb-3">
+                            Keep track of your
+                            <strong>Nuzlockes</strong>
+                            and
+                            <strong>Soulinks</strong>
+                            !
+                        </div>
                         <div v-if="currentUser">
                             <v-btn @click="setCardView(VIEW_CREATE_SHEET)">Create Sheet</v-btn>
                         </div>
@@ -34,7 +40,14 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="mt-12">
+                        <v-btn
+                            class="mt-4"
+                            @click="showUserPreferenceDialog = true"
+                            :disabled="!hasSavedSheets"
+                        >
+                            View my sheets
+                        </v-btn>
+                        <div class="mt-4">
                             <strong>Made by</strong>
                             <v-btn
                                 icon
@@ -124,6 +137,10 @@
             </v-card-text>
         </v-card>
 
+        <v-dialog v-model="showUserPreferenceDialog">
+            <UserSheets @closeDialog="showUserPreferenceDialog = false"></UserSheets>
+        </v-dialog>
+
         <!-- Snackbar -->
         <v-snackbar v-model="snackbar.show">
             {{ snackbar.text }}
@@ -147,15 +164,24 @@ import FirebaseAuth from "@/services/FirebaseAuth";
 import { mapState, mapActions } from "vuex";
 import { User } from "../resources/models";
 import { Constants, PokemonGens } from "../resources/constants";
+import UserSheets from "../components/userSheets.vue";
 
 export default {
     name: "Home",
     computed: {
-        ...mapState("sheets", ["savedSheets", "currentUser"]),
+        ...mapState("sheets", ["savedSheets", "currentUser", "userPreference"]),
+
+        hasSavedSheets() {
+            return this.userPreference?.savedSheets?.length || false;
+        },
+    },
+    components: {
+        UserSheets,
     },
 
     data() {
         return {
+            showUserPreferenceDialog: false,
             isSigningIn: false,
             cardView: "main",
             VIEW_MAIN: "main",
@@ -196,7 +222,7 @@ export default {
     },
 
     methods: {
-        ...mapActions("sheets", ["LoadSavedSheets", "SetCurrentUser"]),
+        ...mapActions("sheets", ["LoadUserPreferences", "SetCurrentUser"]),
         ...mapActions("nuzlocke", ["InitializeSheetDataList", "JoinSheet"]),
 
         async createSheet() {
@@ -276,8 +302,8 @@ export default {
     },
 
     async mounted() {
-        this.LoadSavedSheets();
-        FirebaseAuth.CheckForSignedInUser(this.SetCurrentUser);
+        await FirebaseAuth.CheckForSignedInUser(this.SetCurrentUser);
+        await this.LoadUserPreferences();
     },
 };
 </script>
