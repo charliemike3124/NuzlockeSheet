@@ -9,7 +9,7 @@ const state = {
 };
 
 const mutations = {
-    setUserPrefence: MutationsHelper.set("userPreference"),
+    setUserPreference: MutationsHelper.set("userPreference"),
     setCurrentUser: MutationsHelper.set("currentUser"),
     setCurrentDocumentId: MutationsHelper.set("currentDocumentId"),
 };
@@ -29,7 +29,7 @@ const actions = {
                     savedSheets,
                 };
                 UserPreferencesService.CreateUserPreference(userPreference);
-                commit("setUserPrefence", userPreference);
+                commit("setUserPreference", userPreference);
             }
         } else {
             let userPreference = {
@@ -37,7 +37,7 @@ const actions = {
                 savedSheets: [sheetMetaData],
             };
             UserPreferencesService.CreateUserPreference(userPreference);
-            commit("setUserPrefence", userPreference);
+            commit("setUserPreference", userPreference);
         }
     },
     async LoadUserPreferences({ commit, state }) {
@@ -46,7 +46,7 @@ const actions = {
             const userPrefData = await UserPreferencesService.GetUserPreferences(
                 state.currentUser.uid
             );
-            commit("setUserPrefence", userPrefData);
+            commit("setUserPreference", userPrefData);
         }
     },
     SetCurrentUser({ commit }, user) {
@@ -54,6 +54,16 @@ const actions = {
     },
     SetCurrentDocumentId({ commit }, documentId) {
         commit("setCurrentDocumentId", documentId);
+    },
+
+    async deleteSavedSheet({ commit }, [userId, savedSheet]) {
+        let userPreference = await UserPreferencesService.deleteUserPreferenceSheet(
+            userId,
+            savedSheet
+        );
+        if (userPreference) {
+            commit("setUserPreference", userPreference);
+        }
     },
 };
 

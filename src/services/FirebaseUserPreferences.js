@@ -9,6 +9,7 @@ import {
     serverTimestamp,
     query,
     where,
+    deleteDoc,
 } from "firebase/firestore";
 
 const Database = getFirestore(App);
@@ -44,6 +45,29 @@ const UserPreferencesService = {
         });
 
         return docData;
+    },
+
+    async deleteUserPreferenceSheet(userId, sheetUrl) {
+        let userPreference;
+        const q = query(USER_PREF_COL, where("userId", "==", userId));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc2) => {
+            let savedSheets = doc2.data().savedSheets;
+
+            const sheet = savedSheets.find((item) => item.sheetUrl === sheetUrl);
+            const sheetIndex = savedSheets.indexOf(sheet);
+
+            if (sheetIndex >= 0) {
+                savedSheets.splice(sheetIndex, 1);
+                userPreference = {
+                    userId,
+                    savedSheets,
+                };
+                let docRef = doc(USER_PREF_COL, doc2.id);
+                setDoc(docRef, userPreference);
+            }
+        });
+        return userPreference;
     },
 };
 

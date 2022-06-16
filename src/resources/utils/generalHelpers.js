@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 export default {
     callMethodByName(name, params = null) {
         if (params) {
@@ -23,5 +25,9 @@ export default {
 
     getBulbapediaBaseUrl() {
         return "https://bulbapedia.bulbagarden.net/wiki";
+    },
+
+    formatDate(date, format) {
+        return dayjs(date).format(format);
     },
 };
