@@ -62,25 +62,28 @@
                     <div v-show="cardView === VIEW_CREATE_SHEET">
                         <v-form v-model="createSheetForm.isValid" ref="createSheetForm">
                             <v-text-field
-                                class="v-input-small mb-2"
+                                class="v-input-small mb-5"
                                 v-model="createSheetForm.name"
                                 outlined
                                 label="Your name"
                                 :rules="createSheetForm.nameRules"
                                 prepend-icon="mdi-account"
+                                hide-details
                                 required
-                            ></v-text-field>
+                            >
+                            </v-text-field>
                             <v-text-field
-                                class="v-input-small mb-2"
+                                class="v-input-small mb-5 "
                                 v-model="createSheetForm.title"
                                 outlined
                                 label="Sheet title"
                                 :rules="createSheetForm.titleRules"
                                 prepend-icon="mdi-pencil-box-outline"
+                                hide-details
                                 required
                             ></v-text-field>
                             <v-select
-                                class="v-input-small mb-2"
+                                class="v-input-small mb-5"
                                 v-model="createSheetForm.pokemonGen"
                                 :items="pokemonGames"
                                 :menu-props="{ top: false, offsetY: true }"
@@ -88,9 +91,10 @@
                                 label="Pokémon Game"
                                 :rules="createSheetForm.pokemonGenRules"
                                 outlined
+                                hide-details
                                 required
                             ></v-select>
-                            <div class="d-flex justify-space-between">
+                            <div class="d-flex justify-space-between mt-8">
                                 <v-btn @click="setCardView(VIEW_MAIN)">Back</v-btn>
                                 <v-btn
                                     :disabled="!createSheetForm.isValid"
@@ -200,7 +204,7 @@ export default {
                 titleRules: [(v) => !!v || "Enter a title!"],
                 name: "",
                 nameRules: [(v) => !!v || "Enter a name!"],
-                pokemonGen: PokemonGens.names[0],
+                pokemonGen: null,
                 pokemonGenRules: [(v) => !!v || "Select a game!"],
             },
             joinSheetForm: {

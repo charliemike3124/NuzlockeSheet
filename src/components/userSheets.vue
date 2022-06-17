@@ -25,7 +25,12 @@
                             <a :href="sheet.sheetUrl">{{ sheet.sheetUrl }}</a>
                         </td>
                         <td>
-                            {{ GeneralHelpers.formatDate(sheet.createdAt.toDate(), "YYYY/MM/DD") }}
+                            {{
+                                GeneralHelpers.formatDate(
+                                    sheet.createdAt.toDate(),
+                                    "YYYY/MM/DD HH:mm"
+                                )
+                            }}
                         </td>
 
                         <td>
@@ -90,7 +95,7 @@ export default {
         };
     },
     methods: {
-        ...mapActions("sheets", ["deleteSavedSheet"]),
+        ...mapActions("sheets", ["deleteSavedSheets"]),
 
         addToSheetsToDelete(rowIndex, sheetUrl) {
             this.rowIndexesToDelete.push(rowIndex);
@@ -104,7 +109,7 @@ export default {
         },
 
         deleteSheets() {
-            this.deleteSavedSheet([this.userPreference.userId, this.sheetsToDelete]);
+            this.deleteSavedSheets([this.userPreference.userId, this.sheetsToDelete]);
         },
     },
 };

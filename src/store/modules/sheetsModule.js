@@ -58,7 +58,7 @@ const actions = {
         commit("setCurrentDocumentId", documentId);
     },
 
-    async deleteSavedSheet({ commit }, [userId, sheetUrls]) {
+    async deleteSavedSheets({ commit }, [userId, sheetUrls]) {
         let userPreference = await UserPreferencesService.deleteUserPreferenceSheet(
             userId,
             sheetUrls
