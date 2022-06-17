@@ -21,6 +21,15 @@ const actions = {
                 //-- user is signed in
                 let sheetDataList = state.sheetDataList;
                 sheetDataList.sheetData = sheetData;
+                const currentUser = sheetDataList.players.find(
+                    (p) => p.email === rootState.sheets.currentUser.email
+                );
+
+                if (!currentUser.uid) {
+                    const index = sheetDataList.players.indexOf(currentUser);
+                    sheetDataList.players[index] = rootState.sheets.currentUser;
+                }
+
                 Database.UpdateSheet(sheetDataList, documentId);
                 commit("setSheetDataList", sheetDataList);
             } else {

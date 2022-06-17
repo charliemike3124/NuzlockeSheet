@@ -17,22 +17,35 @@
                     <v-icon>mdi-pokeball</v-icon>
                     <span class="ml-2">{{ sheetDataList.pokemonGame }}</span>
                 </v-col>
-                <v-col>
-                    <div class="d-flex justify-end">
-                        <div v-for="(action, index) in topActions" :key="index" align-self="end">
-                            <CVTooltip :text="action.tooltip">
-                                <v-btn
-                                    icon
-                                    class="mr-2"
-                                    :color="action.toggleColor"
-                                    :disabled="!isCurrentPlayerInvited"
-                                    @click="action.eventHandler"
-                                >
-                                    <v-icon>{{ action.icon }}</v-icon>
-                                </v-btn>
-                            </CVTooltip>
-                        </div>
-                    </div>
+                <v-col class="text-right">
+                    <span
+                        class="mr-15"
+                        v-for="player in sheetDataList.players"
+                        :key="player.email"
+                        align-self="end"
+                    >
+                        <v-img
+                            class="rounded-circle d-inline-block"
+                            style="vertical-align: middle"
+                            v-if="player.photoURL"
+                            :src="player.photoURL"
+                            max-height="30"
+                            max-width="30"
+                        />
+                    </span>
+                    <span v-for="(action, index) in topActions" :key="index" align-self="end">
+                        <CVTooltip :text="action.tooltip">
+                            <v-btn
+                                icon
+                                class="mr-2"
+                                :color="action.toggleColor"
+                                :disabled="!isCurrentPlayerInvited"
+                                @click="action.eventHandler"
+                            >
+                                <v-icon>{{ action.icon }}</v-icon>
+                            </v-btn>
+                        </CVTooltip>
+                    </span>
                 </v-col>
             </v-row>
         </template>
