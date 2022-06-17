@@ -27,7 +27,8 @@ const actions = {
 
                 if (!currentUser.uid) {
                     const index = sheetDataList.players.indexOf(currentUser);
-                    sheetDataList.players[index] = rootState.sheets.currentUser;
+                    sheetDataList.players[index].uid = rootState.sheets.currentUser.uid;
+                    sheetDataList.players[index].photoURL = rootState.sheets.currentUser.photoURL;
                 }
 
                 Database.UpdateSheet(sheetDataList, documentId);

@@ -32,6 +32,15 @@
                             max-height="30"
                             max-width="30"
                         />
+                        <div
+                            v-else
+                            class="rounded-circle d-inline-block"
+                            style="vertical-align: middle"
+                            max-height="30"
+                            max-width="30"
+                        >
+                            hola
+                        </div>
                     </span>
                     <span v-for="(action, index) in topActions" :key="index" align-self="end">
                         <CVTooltip :text="action.tooltip">
