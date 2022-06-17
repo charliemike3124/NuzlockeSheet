@@ -3,7 +3,7 @@
         <v-card>
             <v-card-title class="text-h5">{{ title }}</v-card-title>
 
-            <v-card-text class="mt-2">{{ content }}</v-card-text>
+            <v-card-text class="mt-2"><span v-html="content"></span></v-card-text>
 
             <v-divider></v-divider>
 
@@ -32,6 +32,10 @@ export default {
     },
 
     methods: {
+        show(){
+            this.showConfirmationModal = true;
+        },
+
         callAction() {
             this.action();
             this.showConfirmationModal = false;

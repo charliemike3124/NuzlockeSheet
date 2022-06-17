@@ -40,8 +40,8 @@ const actions = {
             commit("setUserPreference", userPreference);
         }
     },
+
     async LoadUserPreferences({ commit, state }) {
-        // traerse de firebase
         if (state.currentUser) {
             const userPrefData = await UserPreferencesService.GetUserPreferences(
                 state.currentUser.uid
@@ -49,29 +49,25 @@ const actions = {
             commit("setUserPreference", userPrefData);
         }
     },
+
     SetCurrentUser({ commit }, user) {
         commit("setCurrentUser", user);
     },
+
     SetCurrentDocumentId({ commit }, documentId) {
         commit("setCurrentDocumentId", documentId);
     },
 
-    async deleteSavedSheet({ commit }, [userId, savedSheet]) {
+    async deleteSavedSheets({ commit }, [userId, sheetUrls]) {
         let userPreference = await UserPreferencesService.deleteUserPreferenceSheet(
             userId,
-            savedSheet
+            sheetUrls
         );
         if (userPreference) {
             commit("setUserPreference", userPreference);
         }
     },
 };
-
-//-- Not Exported --//
-const storageKeys = {
-    savedSheets: "savedSheets",
-};
-//-----------------//
 
 export default {
     namespaced: true,
