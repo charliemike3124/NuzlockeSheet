@@ -20,14 +20,22 @@
                         <div v-if="currentUser">
                             <v-btn @click="setCardView(VIEW_JOIN_SHEET)">Join Sheet</v-btn>
                         </div>
-                        <div>
+                        <div v-if="currentUser">
+                            <v-btn
+                                @click="showUserPreferenceDialog = true"
+                                :disabled="!hasSavedSheets"
+                            >
+                                View my sheets
+                            </v-btn>
+                        </div>
+                        <div v-if="!currentUser">
                             <v-btn
                                 @click="onSignInOrOffBtn(false, authProviders.google)"
                                 :disabled="isSigningIn"
                                 :loading="isSigningIn"
                             >
                                 <i class="mdi mdi-google"></i>
-                                {{ !currentUser ? "Sign In" : "Sign Out" }}
+                                Sign In
                             </v-btn>
                         </div>
                         <div v-if="currentUser">
@@ -37,29 +45,16 @@
                                 <img :src="currentUser.photoURL" crossorigin="" />
                                 <div>
                                     <strong>{{ currentUser.email }}</strong>
+                                    <br />
+                                    <span
+                                        class="link"
+                                        v-if="currentUser"
+                                        @click="onSignInOrOffBtn(false, authProviders.google)"
+                                    >
+                                        (Sign Out)
+                                    </span>
                                 </div>
                             </div>
-                        </div>
-                        <v-btn
-                            class="mt-4"
-                            @click="showUserPreferenceDialog = true"
-                            :disabled="!hasSavedSheets"
-                        >
-                            View my sheets
-                        </v-btn>
-                        <div class="mt-4">
-                            <strong>Made by</strong>
-                            <v-btn
-                                icon
-                                href="https://www.linkedin.com/in/cvillalobosgtz/"
-                                target="_blank"
-                            >
-                                <v-icon>mdi-linkedin</v-icon>
-                            </v-btn>
-                            -
-                            <v-btn icon href="https://github.com/charliemike3124" target="_blank">
-                                <v-icon>mdi-github</v-icon>
-                            </v-btn>
                         </div>
                     </div>
                 </v-scroll-x-reverse-transition>
@@ -136,6 +131,17 @@
                 </v-scroll-x-reverse-transition>
             </v-card-text>
         </v-card>
+
+        <div class="my-4 home-footer">
+            <strong>Made by</strong>
+            <v-btn class="ml-2" icon href="https://www.linkedin.com/in/cvillalobosgtz/" target="_blank" x-small>
+                <v-icon>mdi-linkedin</v-icon>
+            </v-btn>
+            -
+            <v-btn icon href="https://github.com/charliemike3124" target="_blank" x-small>
+                <v-icon>mdi-github</v-icon>
+            </v-btn>
+        </div>
 
         <v-dialog v-model="showUserPreferenceDialog">
             <UserSheets @closeDialog="showUserPreferenceDialog = false"></UserSheets>
