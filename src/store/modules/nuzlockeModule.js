@@ -15,10 +15,18 @@ const mutations = {
 
 const actions = {
     /* Updates current sheet */
-    SetSheetData({ commit, state }, [sheetData, documentId = null]) {
+    SetSheetData({ commit, state, rootState }, [sheetData, documentId = null]) {
         let sheetDataList = state.sheetDataList;
         sheetDataList.sheetData = sheetData;
         if (documentId) {
+            const currentPlayer = sheetDataList.players.find(
+                (player) => player.email === rootState.sheets.currentUser.email
+            );
+            if (!currentPlayer.uid) {
+                const index = sheetDataList.players.indexOf(currentPlayer);
+                sheetDataList.players[index].uid = rootState.sheets.currentUser.uid;
+                sheetDataList.players[index].photoURL = rootState.sheets.currentUser.photoURL;
+            }
             Database.UpdateSheet(sheetDataList, documentId);
         }
         commit("setSheetDataList", sheetDataList);

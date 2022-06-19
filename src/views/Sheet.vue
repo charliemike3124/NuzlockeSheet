@@ -26,7 +26,11 @@
 
             <v-spacer></v-spacer>
 
-            <v-btn v-if="!userIsSignedIn" :loading="isSigningIn" @click="onSignInClick">
+            <v-btn
+                v-if="!userIsSignedIn && !loadingData"
+                :loading="isSigningIn"
+                @click="onSignInClick"
+            >
                 Sign In
             </v-btn>
         </v-toolbar>
@@ -45,13 +49,14 @@
                 <v-btn text @click="showAlert = false">Okay</v-btn>
             </div>
         </v-alert>
-        <div class="table-cont mb-12">
+        <div class="table-cont mb-12" v-if="!loadingData">
             <NuzlockeTable
                 ref="nuzlockeTable"
                 @showSnackbar="showSnackbar"
                 @managePlayers="onManagePlayersClick"
-            ></NuzlockeTable>
+            />
         </div>
+        <CVSpinner v-if="loadingData" color="primary"><span>Loading data...</span></CVSpinner>
 
         <!-- Modal -->
         <v-dialog v-model="dialog.show" width="600">
@@ -95,7 +100,8 @@
 
 <script>
 import { NuzlockeTable, PlayersTable } from "@/components";
-import { PokemonGens, Constants } from "@/resources/constants";
+import { CVSpinner } from "@/components/common";
+import { Constants } from "@/resources/constants";
 import { mapActions, mapMutations, mapState } from "vuex";
 import FirebaseAuth from "@/services/FirebaseAuth";
 import Database from "@/services/FirebaseDatabase";
@@ -106,6 +112,7 @@ export default {
     components: {
         NuzlockeTable,
         PlayersTable,
+        CVSpinner,
     },
 
     computed: {
@@ -118,6 +125,7 @@ export default {
 
     data() {
         return {
+            loadingData: true,
             isSigningIn: false,
             showAlert: false,
             addedPlayerName: "",
@@ -183,10 +191,12 @@ export default {
         },
 
         onShareSheetClick() {
-            navigator.clipboard.writeText(`https://nuzlockesheets.com/Sheet/${this.currentDocumentId}`);
+            navigator.clipboard.writeText(
+                `https://nuzlockesheets.com/Sheet/${this.currentDocumentId}`
+            );
             this.SetShowSnackbar({
                 show: true,
-                content: "The link has been copied to your clipboard!"
+                content: "The link has been copied to your clipboard!",
             });
         },
 
@@ -228,7 +238,6 @@ export default {
     },
 
     async mounted() {
-        this.$refs.nuzlockeTable.loadingData = true;
         await Promise.all([
             FirebaseAuth.CheckForSignedInUser(this.SetCurrentUser),
             this.SetPokemonListAsync(),
@@ -244,8 +253,9 @@ export default {
         this.SetIsCurrentPlayerInvited(
             !!this.sheetDataList.players.find((p) => p.email === this.currentUser?.email)
         );
-        this.showAlert = !this.isCurrentPlayerInvited && this.sheetDataList.isPrivate;
-        this.$refs.nuzlockeTable.loadingData = false;
+        this.showAlert = !this.isCurrentPlayerInvited;
+
+        this.loadingData = false;
     },
 
     beforeDestroy() {
