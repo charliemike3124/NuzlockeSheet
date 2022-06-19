@@ -13,7 +13,7 @@
                 </thead>
                 <tbody>
                     <tr
-                        v-for="(sheet, index) in userPreference.savedSheets"
+                        v-for="(sheet, index) in orderUserPreferences"
                         :key="index"
                         :class="rowIndexesToDelete.includes(index) ? 'grey lighten-2' : ''"
                     >
@@ -26,10 +26,7 @@
                         </td>
                         <td>
                             {{
-                                GeneralHelpers.formatDate(
-                                    sheet.createdAt.toDate(),
-                                    "YYYY/MM/DD HH:mm"
-                                )
+                                GeneralHelpers.formatDate(sheet.createdAt.toDate(), "MMM DD, YYYY")
                             }}
                         </td>
 
@@ -87,6 +84,12 @@ export default {
     },
     computed: {
         ...mapState("sheets", ["userPreference"]),
+        orderUserPreferences() {
+            const compare = this.userPreference.savedSheets.sort((a, b) => {
+                return a.createdAt?.toDate() < b.createdAt?.toDate() ? 1 : -1;
+            });
+            return compare;
+        },
     },
     data() {
         return {
