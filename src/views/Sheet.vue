@@ -253,8 +253,7 @@ export default {
         this.SetIsCurrentPlayerInvited(
             !!this.sheetDataList.players.find((p) => p.email === this.currentUser?.email)
         );
-        this.showAlert = !this.isCurrentPlayerInvited;
-
+        this.showAlert = !this.isCurrentPlayerInvited && this.sheetDataList.isPrivate;
         this.loadingData = false;
     },
 

@@ -20,9 +20,9 @@ const actions = {
         sheetDataList.sheetData = sheetData;
         if (documentId) {
             const currentPlayer = sheetDataList.players.find(
-                (player) => player.email === rootState.sheets.currentUser.email
+                (player) => player.email === rootState.sheets.currentUser?.email
             );
-            if (!currentPlayer.uid) {
+            if (!currentPlayer?.uid && !!rootState.sheets.currentUser) {
                 const index = sheetDataList.players.indexOf(currentPlayer);
                 sheetDataList.players[index].uid = rootState.sheets.currentUser.uid;
                 sheetDataList.players[index].photoURL = rootState.sheets.currentUser.photoURL;
