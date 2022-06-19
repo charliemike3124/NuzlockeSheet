@@ -54,7 +54,7 @@ const UserPreferencesService = {
         querySnapshot.forEach((document) => {
             let savedSheets = document.data().savedSheets;
 
-            const sheetsToDelete = savedSheets.map((item) => sheetUrls.includes(item.sheetUrl));
+            const sheetsToDelete = savedSheets.filter((item) => sheetUrls.includes(item.sheetUrl));
 
             if (sheetsToDelete.length) {
                 sheetsToDelete.forEach((sheet) => {
