@@ -34,7 +34,7 @@
                         </td>
 
                         <td>
-                            <CVTooltip :text="'Delete'">
+                            <CVTooltip :text="'Remove'">
                                 <v-btn
                                     icon
                                     @click="addToSheetsToDelete(index, sheet.sheetUrl)"

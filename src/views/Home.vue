@@ -70,10 +70,9 @@
                                 prepend-icon="mdi-account"
                                 hide-details
                                 required
-                            >
-                            </v-text-field>
+                            ></v-text-field>
                             <v-text-field
-                                class="v-input-small mb-5 "
+                                class="v-input-small mb-5"
                                 v-model="createSheetForm.title"
                                 outlined
                                 label="Sheet title"
@@ -90,6 +89,19 @@
                                 prepend-icon="mdi-pokeball"
                                 label="Pokémon Game"
                                 :rules="createSheetForm.pokemonGenRules"
+                                outlined
+                                hide-details
+                                required
+                            ></v-select>
+                            <v-select
+                                class="v-input-small mb-5"
+                                v-model="createSheetForm.isPrivate"
+                                :items="isPrivateOptions"
+                                item-text="text"
+                                item-value="value"
+                                :menu-props="{ top: false, offsetY: true }"
+                                prepend-icon="mdi-lock"
+                                label="Visibility"
                                 outlined
                                 hide-details
                                 required
@@ -138,7 +150,13 @@
 
         <div class="my-4 home-footer">
             <strong>Made by</strong>
-            <v-btn class="ml-2" icon href="https://www.linkedin.com/in/cvillalobosgtz/" target="_blank" x-small>
+            <v-btn
+                class="ml-2"
+                icon
+                href="https://www.linkedin.com/in/cvillalobosgtz/"
+                target="_blank"
+                x-small
+            >
                 <v-icon>mdi-linkedin</v-icon>
             </v-btn>
             -
@@ -198,6 +216,10 @@ export default {
             VIEW_CREATE_SHEET: "createSheet",
             VIEW_JOIN_SHEET: "joinSheet",
             pokemonGames: PokemonGens.names,
+            isPrivateOptions: [
+                { text: "Private", value: true },
+                { text: "Public", value: false },
+            ],
             createSheetForm: {
                 isValid: false,
                 title: "",
@@ -206,6 +228,7 @@ export default {
                 nameRules: [(v) => !!v || "Enter a name!"],
                 pokemonGen: null,
                 pokemonGenRules: [(v) => !!v || "Select a game!"],
+                isPrivate: true,
             },
             joinSheetForm: {
                 isValid: false,
@@ -248,6 +271,7 @@ export default {
                     ),
                 ],
                 this.createSheetForm.pokemonGen,
+                this.createSheetForm.isPrivate
             ]);
             this.$router.push({
                 name: "Sheet",
