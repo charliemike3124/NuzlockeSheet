@@ -17,22 +17,27 @@
                     <v-icon>mdi-pokeball</v-icon>
                     <span class="ml-2">{{ sheetDataList.pokemonGame }}</span>
                 </v-col>
-                <v-col>
-                    <div class="d-flex justify-end">
-                        <div v-for="(action, index) in topActions" :key="index" align-self="end">
-                            <CVTooltip :text="action.tooltip">
-                                <v-btn
-                                    icon
-                                    class="mr-2"
-                                    :color="action.toggleColor"
-                                    :disabled="!playerCanEdit || !currentUser"
-                                    @click="action.eventHandler"
-                                >
-                                    <v-icon>{{ action.icon }}</v-icon>
-                                </v-btn>
-                            </CVTooltip>
-                        </div>
-                    </div>
+                <v-col class="text-right">
+                    <span class="mr-15">
+                        <UserProfilePic
+                            v-for="(player, index) in sheetDataList.players"
+                            :key="index"
+                            v-bind="player"
+                        />
+                    </span>
+                    <span v-for="(action, index) in topActions" :key="index" align-self="end">
+                        <CVTooltip :text="action.tooltip">
+                            <v-btn
+                                icon
+                                class="mr-2"
+                                :color="action.toggleColor"
+                                :disabled="!isCurrentPlayerInvited"
+                                @click="action.eventHandler"
+                            >
+                                <v-icon>{{ action.icon }}</v-icon>
+                            </v-btn>
+                        </CVTooltip>
+                    </span>
                 </v-col>
             </v-row>
         </template>
@@ -65,11 +70,7 @@
                 <v-icon
                     :class="!!action.className ? action.className(item) : ''"
                     :disabled="
-                        !playerCanEdit
-                            ? true
-                            : !!action.disabled
-                            ? action.disabled(item)
-                            : false
+                        !playerCanEdit ? true : !!action.disabled ? action.disabled(item) : false
                     "
                     small
                     @click="
@@ -95,9 +96,11 @@ import { mapActions, mapState } from "vuex";
 import { Constants } from "../../resources/constants";
 import { CVTooltip } from "@/components/common";
 import PokemonSelect from "./pokemonSelect.vue";
+import UserProfilePic from "./userProfilePic.vue";
+
 export default {
     name: "NuzlockeTable",
-    components: { CVTooltip, PokemonSelect },
+    components: { CVTooltip, PokemonSelect, UserProfilePic },
     computed: {
         ...mapState("pokemon", ["pokemonList"]),
         ...mapState("nuzlocke", ["isCurrentPlayerInvited", "sheetDataList"]),
@@ -107,9 +110,9 @@ export default {
             return this.sheetDataList.sheetData.headers.filter((item) => item.isPlayer);
         },
 
-        playerCanEdit(){
+        playerCanEdit() {
             return !this.sheetDataList.isPrivate || this.isCurrentPlayerInvited;
-        }
+        },
     },
     data() {
         return {
@@ -217,7 +220,7 @@ export default {
         },
 
         managePlayers() {
-            this.$emit("managePlayers");
+            return this.$emit("managePlayers");
         },
     },
 };
