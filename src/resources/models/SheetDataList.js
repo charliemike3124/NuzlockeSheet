@@ -7,7 +7,7 @@ export default function SheetDataList(
         headers: [],
         rows: [],
     },
-    isPrivate = false
+    isPrivate = true
 ) {
     return {
         title: title,

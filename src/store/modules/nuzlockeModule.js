@@ -9,29 +9,30 @@ const state = {
 };
 
 const mutations = {
-    setSheetData: MutationsHelper.set("sheetData"),
     setSheetDataList: MutationsHelper.set("sheetDataList"),
     setIsCurrentPlayerInvited: MutationsHelper.set("isCurrentPlayerInvited"),
 };
 
 const actions = {
     /* Updates current sheet */
-    SetSheetData({ commit, rootState, state }, [sheetData, documentId = null]) {
+    SetSheetData({ commit, state }, [sheetData, documentId = null]) {
+        let sheetDataList = state.sheetDataList;
+        sheetDataList.sheetData = sheetData;
         if (documentId) {
-            if (!!rootState.sheets.currentUser?.uid) {
-                //-- user is signed in
-                let sheetDataList = state.sheetDataList;
-                sheetDataList.sheetData = sheetData;
-                Database.UpdateSheet(sheetDataList, documentId);
-                commit("setSheetDataList", sheetDataList);
-            } else {
-                //-- TODO: handle logged off save.
-            }
+            Database.UpdateSheet(sheetDataList, documentId);
         }
+        commit("setSheetDataList", sheetDataList);
+    },
+
+    UpdateSheetDataList({ commit }, [sheetDataList, documentId = null]) {
+        if (documentId) {
+            Database.UpdateSheet(sheetDataList, documentId);
+        }
+        commit("setSheetDataList", sheetDataList);
     },
 
     /* Updates sheet's allowed players */
-    SetPlayers({ commit, state, dispatch, rootState }, players) {
+    SetPlayers({ state, dispatch, rootState }, players) {
         //Add player props to every sheet's header in the list.
         let sheetDataList = state.sheetDataList;
         sheetDataList.players = players;
@@ -110,8 +111,8 @@ const actions = {
     },
 
     /* Initialices an empty sheet data list */
-    async InitializeSheetDataList({ commit, dispatch }, [title, players, pokemonGame]) {
-        let sheetDataList = SheetDataList(title, players, [], pokemonGame);
+    async InitializeSheetDataList({ commit, dispatch }, [title, players, pokemonGame, isPrivate]) {
+        let sheetDataList = SheetDataList(title, players, [], pokemonGame, {}, isPrivate);
         let playerHeaders = [];
         players.forEach((player) => {
             playerHeaders.push({
@@ -166,9 +167,9 @@ const actions = {
     async JoinSheet({ commit, dispatch, state, rootState }, documentId) {
         let sheetDataList;
         sheetDataList = await Database.GetSheetByDocumentId(documentId);
-        const currentUserIsInvited = !!rootState.sheets.currentUser
-            ? sheetDataList?.playerEmails?.includes(rootState.sheets.currentUser.email) ?? false
-            : false;
+        const currentUserIsInvited =
+            sheetDataList?.playerEmails?.includes(rootState.sheets.currentUser?.email) ||
+            !sheetDataList.isPrivate;
         if (currentUserIsInvited || !sheetDataList?.isPrivate) {
             //Subscribe to any changes done to the sheet document in firebase.
             sheetDataList = await Database.SubscribeToSheet((dbSheetDataList) => {
@@ -181,7 +182,7 @@ const actions = {
             return Constants.JOIN_SHEET_ERRORS.NO_ACCESS;
         }
 
-        if (sheetDataList) {
+        if (sheetDataList && rootState.sheets.currentUser) {
             //Save to local storage for user preference
             dispatch(
                 "sheets/AddOrRemoveSavedSheet",
@@ -217,13 +218,6 @@ const actions = {
         commit("setIsCurrentPlayerInvited", value);
     },
 };
-
-//-- Not Exported --//
-const storageKeys = {
-    sheetDataList: "sheetDataList",
-    selectedSheet: "selectedSheet",
-};
-//-----------------//
 
 export default {
     namespaced: true,

@@ -8,7 +8,7 @@
             hide-details
             :items="pokemonList"
             :value="getSelectedPokemon(item[`${prop.value}`])"
-            :disabled="!isCurrentPlayerInvited"
+            :disabled="disabled"
             @change="onPokemonSelect($event, prop.value, item)"
         >
             <template v-slot:selection="data">
@@ -79,6 +79,7 @@ export default {
     props: {
         item: Object,
         prop: Object,
+        disabled: Boolean,
     },
     computed: {
         ...mapState("pokemon", ["pokemonList"]),
