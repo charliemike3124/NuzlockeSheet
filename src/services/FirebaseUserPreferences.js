@@ -47,23 +47,26 @@ const UserPreferencesService = {
         return docData;
     },
 
-    async deleteUserPreferenceSheet(userId, sheetUrl) {
+    async deleteUserPreferenceSheet(userId, sheetUrls) {
         let userPreference;
         const q = query(USER_PREF_COL, where("userId", "==", userId));
         const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc2) => {
-            let savedSheets = doc2.data().savedSheets;
+        querySnapshot.forEach((document) => {
+            let savedSheets = document.data().savedSheets;
 
-            const sheet = savedSheets.find((item) => item.sheetUrl === sheetUrl);
-            const sheetIndex = savedSheets.indexOf(sheet);
+            const sheetsToDelete = savedSheets.filter((item) => sheetUrls.includes(item.sheetUrl));
 
-            if (sheetIndex >= 0) {
-                savedSheets.splice(sheetIndex, 1);
+            if (sheetsToDelete.length) {
+                sheetsToDelete.forEach((sheet) => {
+                    const sheetIndex = savedSheets.indexOf(sheet);
+                    savedSheets.splice(sheetIndex, 1);
+                });
+
                 userPreference = {
                     userId,
                     savedSheets,
                 };
-                let docRef = doc(USER_PREF_COL, doc2.id);
+                let docRef = doc(USER_PREF_COL, document.id);
                 setDoc(docRef, userPreference);
             }
         });

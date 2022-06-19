@@ -1,27 +1,22 @@
 <template>
-    <div>
+    <v-card>
         <v-simple-table fixed-header height="300px">
             <template v-slot:default>
                 <thead>
                     <tr>
                         <th class="text-left">Title</th>
-                        <th class="text-left">Pokemon Game Mode</th>
+                        <th class="text-left">Pokémon Game</th>
                         <th class="text-left">URL</th>
                         <th class="text-left">Created at</th>
                         <th class="text-left"></th>
-                        <v-btn
-                            depressed
-                            color="primary"
-                            small
-                            @click="$emit('closeDialog')"
-                            class="mt-2"
-                        >
-                            Close
-                        </v-btn>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(sheet, index) in userPreference.savedSheets" :key="index">
+                    <tr
+                        v-for="(sheet, index) in userPreference.savedSheets"
+                        :key="index"
+                        :class="rowIndexesToDelete.includes(index) ? 'grey lighten-2' : ''"
+                    >
                         <td>
                             {{ sheet.title }}
                         </td>
@@ -30,51 +25,91 @@
                             <a :href="sheet.sheetUrl">{{ sheet.sheetUrl }}</a>
                         </td>
                         <td>
-                            {{ GeneralHelpers.formatDate(sheet.createdAt.toDate(), "YYYY/MM/DD") }}
+                            {{
+                                GeneralHelpers.formatDate(
+                                    sheet.createdAt.toDate(),
+                                    "YYYY/MM/DD HH:mm"
+                                )
+                            }}
                         </td>
 
                         <td>
-                            <v-btn icon @click="confirmDeleteSheet(sheet.sheetUrl)">
-                                <v-icon>mdi-delete</v-icon>
-                            </v-btn>
+                            <CVTooltip :text="'Remove'">
+                                <v-btn
+                                    icon
+                                    @click="addToSheetsToDelete(index, sheet.sheetUrl)"
+                                    :disabled="rowIndexesToDelete.includes(index)"
+                                >
+                                    <v-icon>mdi-delete</v-icon>
+                                </v-btn>
+                            </CVTooltip>
+                            <CVTooltip :text="'Undo'">
+                                <v-btn
+                                    icon
+                                    @click="removeFromSheetsToDelete(sheet.sheetUrl)"
+                                    :disabled="!rowIndexesToDelete.includes(index)"
+                                >
+                                    <v-icon>mdi-undo</v-icon>
+                                </v-btn>
+                            </CVTooltip>
                         </td>
                     </tr>
                 </tbody>
             </template>
         </v-simple-table>
+        <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn @click="$emit('closeDialog')">Close</v-btn>
+            <v-btn
+                @click="$refs.confirmationModal.show()"
+                color="primary"
+                :disabled="!rowIndexesToDelete.length"
+            >
+                Save
+            </v-btn>
+        </v-card-actions>
         <ConfirmationModal
             ref="confirmationModal"
-            :title="'Confirmation'"
-            :content="'are you sure you want to delete this sheet?'"
-            :action="deleteSheet"
+            :content="'Are you sure you want to <strong> remove </strong> these sheets from your saved sheets?'"
+            :action="deleteSheets"
         ></ConfirmationModal>
-    </div>
+    </v-card>
 </template>
 
 <script>
 import { mapActions, mapState } from "vuex";
-import { ConfirmationModal } from "../components/common";
+import { ConfirmationModal, CVTooltip } from "../components/common";
 
 export default {
     components: {
         ConfirmationModal,
+        CVTooltip,
     },
     computed: {
         ...mapState("sheets", ["userPreference"]),
     },
     data() {
         return {
-            selectedSheetUrl: "",
+            sheetsToDelete: [],
+            rowIndexesToDelete: [],
         };
     },
     methods: {
-        ...mapActions("sheets", ["deleteSavedSheet"]),
-        confirmDeleteSheet(sheetUrl) {
-            this.$refs.confirmationModal.showConfirmationModal = true;
-            this.selectedSheetUrl = sheetUrl;
+        ...mapActions("sheets", ["deleteSavedSheets"]),
+
+        addToSheetsToDelete(rowIndex, sheetUrl) {
+            this.rowIndexesToDelete.push(rowIndex);
+            this.sheetsToDelete.push(sheetUrl);
         },
-        deleteSheet() {
-            this.deleteSavedSheet([this.userPreference.userId, this.selectedSheetUrl]);
+
+        removeFromSheetsToDelete(sheetUrl) {
+            const index = this.sheetsToDelete.indexOf(sheetUrl);
+            this.sheetsToDelete.splice(index, 1);
+            this.rowIndexesToDelete.splice(index, 1);
+        },
+
+        deleteSheets() {
+            this.deleteSavedSheets([this.userPreference.userId, this.sheetsToDelete]);
         },
     },
 };

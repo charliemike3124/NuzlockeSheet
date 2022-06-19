@@ -79,6 +79,7 @@
                 @onPokemonSelect="onPokemonSelect"
                 v-bind="{ item, prop }"
                 :key="index"
+                :disabled="!playerCanEdit"
             ></PokemonSelect>
         </template>
 
@@ -88,11 +89,7 @@
                 <v-icon
                     :class="!!action.className ? action.className(item) : ''"
                     :disabled="
-                        !isCurrentPlayerInvited
-                            ? true
-                            : !!action.disabled
-                            ? action.disabled(item)
-                            : false
+                        !playerCanEdit ? true : !!action.disabled ? action.disabled(item) : false
                     "
                     small
                     @click="
@@ -125,10 +122,14 @@ export default {
     computed: {
         ...mapState("pokemon", ["pokemonList"]),
         ...mapState("nuzlocke", ["isCurrentPlayerInvited", "sheetDataList"]),
-        ...mapState("sheets", ["currentDocumentId"]),
+        ...mapState("sheets", ["currentDocumentId", "currentUser"]),
 
         playerHeaders() {
             return this.sheetDataList.sheetData.headers.filter((item) => item.isPlayer);
+        },
+
+        playerCanEdit() {
+            return !this.sheetDataList.isPrivate || this.isCurrentPlayerInvited;
         },
     },
     data() {

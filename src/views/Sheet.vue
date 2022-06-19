@@ -1,7 +1,7 @@
 <template>
     <div class="main-sheet-cont grey lighten-5">
         <v-toolbar dense color="primary" class="white--text">
-            <v-menu bottom left>
+            <v-menu bottom left v-if="isCurrentPlayerInvited">
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn icon v-bind="attrs" v-on="on" color="white">
                         <v-icon>mdi-dots-vertical</v-icon>
@@ -16,8 +16,8 @@
                         :key="index"
                     >
                         <v-list-item-title>
-                            <i class="mdi" :class="item.icon"></i>
-                            {{ item.name }}
+                            <i class="mdi" :class="item.icon()"></i>
+                            {{ item.name() }}
                         </v-list-item-title>
                     </v-list-item>
                 </v-list>
@@ -97,12 +97,12 @@
 <script>
 import { NuzlockeTable, PlayersTable } from "@/components";
 import { PokemonGens, Constants } from "@/resources/constants";
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapMutations, mapState } from "vuex";
 import FirebaseAuth from "@/services/FirebaseAuth";
 import Database from "@/services/FirebaseDatabase";
 
 export default {
-    name: "Home",
+    name: "Sheet",
 
     components: {
         NuzlockeTable,
@@ -110,12 +110,7 @@ export default {
     },
 
     computed: {
-        ...mapState("nuzlocke", [
-            "sheetData",
-            "sheetDataList",
-            "selectedSheet",
-            "isCurrentPlayerInvited",
-        ]),
+        ...mapState("nuzlocke", ["sheetDataList", "isCurrentPlayerInvited"]),
         ...mapState("sheets", ["currentUser", "currentDocumentId"]),
         userIsSignedIn() {
             return this.currentUser?.uid;
@@ -139,30 +134,45 @@ export default {
             },
             menuActions: [
                 {
-                    name: "Share",
+                    name: () => "Share",
                     action: this.onShareSheetClick,
-                    icon: "mdi-share",
+                    icon: () => "mdi-share",
                 },
                 {
-                    name: "Exit",
+                    name: () => (this.sheetDataList.isPrivate ? "Make Public" : "Make Private"),
+                    action: this.onMakePrivateClick,
+                    icon: () => (this.sheetDataList.isPrivate ? "mdi-lock-open" : "mdi-lock"),
+                },
+                {
+                    name: () => "Exit",
                     action: this.onExitSheetClick,
-                    icon: "mdi-subdirectory-arrow-left",
+                    icon: () => "mdi-subdirectory-arrow-left",
                 },
             ],
         };
     },
 
     methods: {
-        ...mapActions("nuzlocke", ["JoinSheet", "SetPlayers", "SetIsCurrentPlayerInvited"]),
+        ...mapActions("nuzlocke", [
+            "JoinSheet",
+            "SetPlayers",
+            "SetIsCurrentPlayerInvited",
+            "UpdateSheetDataList",
+        ]),
         ...mapActions("pokemon", ["SetPokemonListAsync"]),
         ...mapActions("sheets", ["SetCurrentUser", "SetCurrentDocumentId", "LoadUserPreferences"]),
+
+        ...mapMutations("common", ["SetShowSnackbar"]),
+
         showDialog(title) {
             this.dialog.show = true;
             this.dialog.title = title;
         },
+
         closeDialog() {
             this.dialog.show = false;
         },
+
         showSnackbar(alert) {
             this.snackbar.show = true;
             this.snackbar.text = alert.text;
@@ -173,16 +183,38 @@ export default {
         onManagePlayersClick() {
             this.showDialog("Manage Players");
         },
+
         onShareSheetClick() {
-            //TODO - Copy sheet route to clipboard
+            navigator.clipboard.writeText(
+                `https://nuzlockesheets.com/Sheet/${this.currentDocumentId}`
+            );
+            this.SetShowSnackbar({
+                show: true,
+                content: "The link has been copied to your clipboard!",
+            });
         },
+
         onSavePlayersClick() {
             this.SetPlayers(this.$refs.playersTable.players);
             this.closeDialog();
         },
+
         onExitSheetClick() {
             this.$router.push({ name: "Home" });
         },
+
+        onMakePrivateClick() {
+            let updatedSheetDataList = this.GeneralHelpers.deepCopy(this.sheetDataList);
+            updatedSheetDataList.isPrivate = !updatedSheetDataList.isPrivate;
+            this.UpdateSheetDataList([updatedSheetDataList, this.currentDocumentId]);
+            this.SetShowSnackbar({
+                show: true,
+                content: updatedSheetDataList.isPrivate
+                    ? "This sheet will now be editable only by invited players."
+                    : "This sheet will now be editable by everyone.",
+            });
+        },
+
         async onSignInClick() {
             this.isSigningIn = true;
             const user = await FirebaseAuth.SignInWithPopupAsync(Constants.AUTH_PROVIDERS.GOOGLE);
@@ -194,9 +226,11 @@ export default {
         },
         //-- End Event Handlers --//
     },
+
     created() {
         this.SetCurrentDocumentId(this.$route.params.code);
     },
+
     async mounted() {
         await Promise.all([
             FirebaseAuth.CheckForSignedInUser(this.SetCurrentUser),
@@ -217,6 +251,7 @@ export default {
 
         this.loadingData = false;
     },
+
     beforeDestroy() {
         Database.UnsubscribeFromSheet();
     },

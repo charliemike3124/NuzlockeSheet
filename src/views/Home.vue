@@ -20,14 +20,22 @@
                         <div v-if="currentUser">
                             <v-btn @click="setCardView(VIEW_JOIN_SHEET)">Join Sheet</v-btn>
                         </div>
-                        <div>
+                        <div v-if="currentUser">
+                            <v-btn
+                                @click="showUserPreferenceDialog = true"
+                                :disabled="!hasSavedSheets"
+                            >
+                                View my sheets
+                            </v-btn>
+                        </div>
+                        <div v-if="!currentUser">
                             <v-btn
                                 @click="onSignInOrOffBtn(false, authProviders.google)"
                                 :disabled="isSigningIn"
                                 :loading="isSigningIn"
                             >
                                 <i class="mdi mdi-google"></i>
-                                {{ !currentUser ? "Sign In" : "Sign Out" }}
+                                Sign In
                             </v-btn>
                         </div>
                         <div v-if="currentUser">
@@ -37,29 +45,16 @@
                                 <img :src="currentUser.photoURL" crossorigin="" />
                                 <div>
                                     <strong>{{ currentUser.email }}</strong>
+                                    <br />
+                                    <span
+                                        class="link"
+                                        v-if="currentUser"
+                                        @click="onSignInOrOffBtn(false, authProviders.google)"
+                                    >
+                                        (Sign Out)
+                                    </span>
                                 </div>
                             </div>
-                        </div>
-                        <v-btn
-                            class="mt-4"
-                            @click="showUserPreferenceDialog = true"
-                            :disabled="!hasSavedSheets"
-                        >
-                            View my sheets
-                        </v-btn>
-                        <div class="mt-4">
-                            <strong>Made by</strong>
-                            <v-btn
-                                icon
-                                href="https://www.linkedin.com/in/cvillalobosgtz/"
-                                target="_blank"
-                            >
-                                <v-icon>mdi-linkedin</v-icon>
-                            </v-btn>
-                            -
-                            <v-btn icon href="https://github.com/charliemike3124" target="_blank">
-                                <v-icon>mdi-github</v-icon>
-                            </v-btn>
                         </div>
                     </div>
                 </v-scroll-x-reverse-transition>
@@ -67,25 +62,27 @@
                     <div v-show="cardView === VIEW_CREATE_SHEET">
                         <v-form v-model="createSheetForm.isValid" ref="createSheetForm">
                             <v-text-field
-                                class="v-input-small mb-2"
+                                class="v-input-small mb-5"
                                 v-model="createSheetForm.name"
                                 outlined
                                 label="Your name"
                                 :rules="createSheetForm.nameRules"
                                 prepend-icon="mdi-account"
+                                hide-details
                                 required
                             ></v-text-field>
                             <v-text-field
-                                class="v-input-small mb-2"
+                                class="v-input-small mb-5"
                                 v-model="createSheetForm.title"
                                 outlined
                                 label="Sheet title"
                                 :rules="createSheetForm.titleRules"
                                 prepend-icon="mdi-pencil-box-outline"
+                                hide-details
                                 required
                             ></v-text-field>
                             <v-select
-                                class="v-input-small mb-2"
+                                class="v-input-small mb-5"
                                 v-model="createSheetForm.pokemonGen"
                                 :items="pokemonGames"
                                 :menu-props="{ top: false, offsetY: true }"
@@ -93,9 +90,23 @@
                                 label="Pokémon Game"
                                 :rules="createSheetForm.pokemonGenRules"
                                 outlined
+                                hide-details
                                 required
                             ></v-select>
-                            <div class="d-flex justify-space-between">
+                            <v-select
+                                class="v-input-small mb-5"
+                                v-model="createSheetForm.isPrivate"
+                                :items="isPrivateOptions"
+                                item-text="text"
+                                item-value="value"
+                                :menu-props="{ top: false, offsetY: true }"
+                                prepend-icon="mdi-lock"
+                                label="Visibility"
+                                outlined
+                                hide-details
+                                required
+                            ></v-select>
+                            <div class="d-flex justify-space-between mt-8">
                                 <v-btn @click="setCardView(VIEW_MAIN)">Back</v-btn>
                                 <v-btn
                                     :disabled="!createSheetForm.isValid"
@@ -136,6 +147,23 @@
                 </v-scroll-x-reverse-transition>
             </v-card-text>
         </v-card>
+
+        <div class="my-4 home-footer">
+            <strong>Made by</strong>
+            <v-btn
+                class="ml-2"
+                icon
+                href="https://www.linkedin.com/in/cvillalobosgtz/"
+                target="_blank"
+                x-small
+            >
+                <v-icon>mdi-linkedin</v-icon>
+            </v-btn>
+            -
+            <v-btn icon href="https://github.com/charliemike3124" target="_blank" x-small>
+                <v-icon>mdi-github</v-icon>
+            </v-btn>
+        </div>
 
         <v-dialog v-model="showUserPreferenceDialog">
             <UserSheets @closeDialog="showUserPreferenceDialog = false"></UserSheets>
@@ -188,14 +216,19 @@ export default {
             VIEW_CREATE_SHEET: "createSheet",
             VIEW_JOIN_SHEET: "joinSheet",
             pokemonGames: PokemonGens.names,
+            isPrivateOptions: [
+                { text: "Private", value: true },
+                { text: "Public", value: false },
+            ],
             createSheetForm: {
                 isValid: false,
                 title: "",
                 titleRules: [(v) => !!v || "Enter a title!"],
                 name: "",
                 nameRules: [(v) => !!v || "Enter a name!"],
-                pokemonGen: PokemonGens.names[0],
+                pokemonGen: null,
                 pokemonGenRules: [(v) => !!v || "Select a game!"],
+                isPrivate: true,
             },
             joinSheetForm: {
                 isValid: false,
@@ -238,6 +271,7 @@ export default {
                     ),
                 ],
                 this.createSheetForm.pokemonGen,
+                this.createSheetForm.isPrivate
             ]);
             this.$router.push({
                 name: "Sheet",
