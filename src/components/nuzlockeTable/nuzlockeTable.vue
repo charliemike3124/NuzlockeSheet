@@ -36,7 +36,7 @@
                             <div
                                 v-else
                                 class="pa-4 rounded-circle d-inline-block p-rel"
-                                :style="getPlayerIconStyle()"
+                                :style="getPlayerIconStyle(player.email)"
                                 max-height="30"
                                 max-width="30"
                             >
@@ -135,7 +135,6 @@ export default {
     data() {
         return {
             playerIconStyles: [],
-            playerIconCounter: 0,
             loadingData: false,
 
             topActions: [
@@ -250,11 +249,10 @@ export default {
             let styles = { verticalAlign: "middle", backgroundColor: color };
             return styles;
         },
-        getPlayerIconStyle() {
-            let style = this.playerIconStyles[this.playerIconCounter];
-            this.playerIconCounter++;
-            console.log(style, this.playerIconCounter);
-            return style;
+        getPlayerIconStyle(playerEmail) {
+            const style = this.playerIconStyles.find((item) => item.playerEmail === playerEmail);
+            console.log(playerEmail);
+            return style.style;
         },
     },
 
@@ -268,12 +266,13 @@ export default {
         },
     },
     created() {
-        console.log(this.sheetDataList.players);
         this.sheetDataList.players.forEach((player) => {
             if (!player.photoURL) {
-                this.playerIconStyles.push(this.generateIconStyle());
+                this.playerIconStyles.push({
+                    style: this.generateIconStyle(),
+                    playerEmail: player.email,
+                });
             }
-            console.log(this.playerIconStyles);
         });
     },
 };
