@@ -18,29 +18,31 @@
                     <span class="ml-2">{{ sheetDataList.pokemonGame }}</span>
                 </v-col>
                 <v-col class="text-right">
-                    <span
-                        class="mr-15"
-                        v-for="player in sheetDataList.players"
-                        :key="player.email"
-                        align-self="end"
-                    >
-                        <v-img
-                            class="rounded-circle d-inline-block"
-                            style="vertical-align: middle"
-                            v-if="player.photoURL"
-                            :src="player.photoURL"
-                            max-height="30"
-                            max-width="30"
-                        />
-                        <div
-                            v-else
-                            class="rounded-circle d-inline-block"
-                            style="vertical-align: middle"
-                            max-height="30"
-                            max-width="30"
+                    <span class="mr-15">
+                        <span
+                            class=""
+                            v-for="player in sheetDataList.players"
+                            :key="player.email"
+                            align-self="end"
                         >
-                            hola
-                        </div>
+                            <v-img
+                                class="rounded-circle d-inline-block"
+                                style="vertical-align: middle"
+                                v-if="player.photoURL"
+                                :src="player.photoURL"
+                                max-height="30"
+                                max-width="30"
+                            />
+                            <div
+                                v-else
+                                class="pa-4 rounded-circle d-inline-block p-rel"
+                                :style="getPlayerIconStyle()"
+                                max-height="30"
+                                max-width="30"
+                            >
+                                <span class="profile-letters">ha</span>
+                            </div>
+                        </span>
                     </span>
                     <span v-for="(action, index) in topActions" :key="index" align-self="end">
                         <CVTooltip :text="action.tooltip">
@@ -116,6 +118,7 @@ import { mapActions, mapState } from "vuex";
 import { Constants } from "../../resources/constants";
 import { CVTooltip } from "@/components/common";
 import PokemonSelect from "./pokemonSelect.vue";
+
 export default {
     name: "NuzlockeTable",
     components: { CVTooltip, PokemonSelect },
@@ -130,7 +133,10 @@ export default {
     },
     data() {
         return {
+            playerIconStyles: [],
+            playerIconCounter: 0,
             loadingData: false,
+
             topActions: [
                 {
                     name: "clean",
@@ -234,8 +240,40 @@ export default {
         },
 
         managePlayers() {
-            this.$emit("managePlayers");
+            return this.$emit("managePlayers");
         },
+
+        generateIconStyle() {
+            const colors = this.Constants.PROFILE_ICON_COLORS;
+            let color = colors[Math.floor(Math.random() * colors.length)];
+            let styles = { verticalAlign: "middle", backgroundColor: color };
+            return styles;
+        },
+        getPlayerIconStyle() {
+            let style = this.playerIconStyles[this.playerIconCounter];
+            this.playerIconCounter++;
+            console.log(style, this.playerIconCounter);
+            return style;
+        },
+    },
+
+    watch: {
+        "sheetDataList.players"(val, oldVal) {
+            if (val.length > oldVal.length) {
+                this.playerIconStyles.push(this.generateIconStyle());
+            } else {
+                this.playerIconStyles.pop();
+            }
+        },
+    },
+    created() {
+        console.log(this.sheetDataList.players);
+        this.sheetDataList.players.forEach((player) => {
+            if (!player.photoURL) {
+                this.playerIconStyles.push(this.generateIconStyle());
+            }
+            console.log(this.playerIconStyles);
+        });
     },
 };
 </script>
@@ -254,5 +292,13 @@ export default {
 }
 .row-in-party {
     background-color: rgb(120, 250, 137) !important;
+}
+.profile-letters {
+    position: absolute;
+    top: 4px;
+    right: 5px;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: white;
 }
 </style>

@@ -13,4 +13,5 @@ export default {
         TWITTER: 2,
         EMAIL: 3,
     },
+    PROFILE_ICON_COLORS: ["#f27777", "#778bd0", "#fabc6e", "#57b064", "#9a41a1"],
 };

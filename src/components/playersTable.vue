@@ -178,7 +178,7 @@ export default {
         },
     },
     mounted() {
-        this.players = this.sheetDataList?.players || [];
+        this.players = this.GeneralHelpers.deepCopy(this.sheetDataList?.players) || [];
     },
 };
 </script>

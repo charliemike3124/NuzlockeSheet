@@ -47,6 +47,7 @@
         </v-alert>
         <div class="table-cont mb-12">
             <NuzlockeTable
+                v-if="!loadingData"
                 ref="nuzlockeTable"
                 @showSnackbar="showSnackbar"
                 @managePlayers="onManagePlayersClick"
@@ -123,6 +124,7 @@ export default {
 
     data() {
         return {
+            loadingData: true,
             isSigningIn: false,
             showAlert: false,
             addedPlayerName: "",
@@ -196,7 +198,6 @@ export default {
         this.SetCurrentDocumentId(this.$route.params.code);
     },
     async mounted() {
-        this.$refs.nuzlockeTable.loadingData = true;
         await Promise.all([
             FirebaseAuth.CheckForSignedInUser(this.SetCurrentUser),
             this.SetPokemonListAsync(),
@@ -213,8 +214,8 @@ export default {
             !!this.sheetDataList.players.find((p) => p.email === this.currentUser?.email)
         );
         this.showAlert = !this.isCurrentPlayerInvited;
-        this.$refs.nuzlockeTable.selectedGame = PokemonGens.names[this.selectedSheet];
-        this.$refs.nuzlockeTable.loadingData = false;
+
+        this.loadingData = false;
     },
     beforeDestroy() {
         Database.UnsubscribeFromSheet();
