@@ -23,7 +23,7 @@ const actions = {
                 (player) => player.email === rootState.sheets.currentUser.email
             );
             if (!currentPlayer.uid) {
-                const index = sheetDataList.indexOf(currentPlayer);
+                const index = sheetDataList.players.indexOf(currentPlayer);
                 sheetDataList.players[index].uid = rootState.sheets.currentUser.uid;
                 sheetDataList.players[index].photoURL = rootState.sheets.currentUser.photoURL;
             }
