@@ -19,36 +19,11 @@
                 </v-col>
                 <v-col class="text-right">
                     <span class="mr-15">
-                        <span
-                            class=""
-                            v-for="player in sheetDataList.players"
-                            :key="player.email"
-                            align-self="end"
-                        >
-                            <v-img
-                                class="rounded-circle d-inline-block"
-                                style="vertical-align: middle"
-                                v-if="player.photoURL"
-                                :src="player.photoURL"
-                                max-height="30"
-                                max-width="30"
-                            />
-                            <div
-                                v-else
-                                class="pa-4 rounded-circle d-inline-block p-rel"
-                                :style="getPlayerIconStyle(player.email)"
-                                max-height="30"
-                                max-width="30"
-                            >
-                                <span class="profile-letters">
-                                    {{
-                                        player.name.length > 2
-                                            ? player.name.substring(0, 2)
-                                            : player.name
-                                    }}
-                                </span>
-                            </div>
-                        </span>
+                        <UserProfilePic
+                            v-for="(player, index) in sheetDataList.players"
+                            :key="index"
+                            v-bind="player"
+                        />
                     </span>
                     <span v-for="(action, index) in topActions" :key="index" align-self="end">
                         <CVTooltip :text="action.tooltip">
@@ -121,10 +96,11 @@ import { mapActions, mapState } from "vuex";
 import { Constants } from "../../resources/constants";
 import { CVTooltip } from "@/components/common";
 import PokemonSelect from "./pokemonSelect.vue";
+import UserProfilePic from "./userProfilePic.vue";
 
 export default {
     name: "NuzlockeTable",
-    components: { CVTooltip, PokemonSelect },
+    components: { CVTooltip, PokemonSelect, UserProfilePic },
     computed: {
         ...mapState("pokemon", ["pokemonList"]),
         ...mapState("nuzlocke", ["isCurrentPlayerInvited", "sheetDataList"]),
@@ -140,9 +116,7 @@ export default {
     },
     data() {
         return {
-            playerIconStyles: [],
             loadingData: false,
-
             topActions: [
                 {
                     name: "clean",
@@ -248,38 +222,6 @@ export default {
         managePlayers() {
             return this.$emit("managePlayers");
         },
-
-        generateIconStyle() {
-            const colors = this.Constants.PROFILE_ICON_COLORS;
-            let color = colors[Math.floor(Math.random() * colors.length)];
-            let styles = { verticalAlign: "middle", backgroundColor: color };
-            return styles;
-        },
-        getPlayerIconStyle(playerEmail) {
-            const style = this.playerIconStyles.find((item) => item.playerEmail === playerEmail);
-            console.log(playerEmail);
-            return style.style;
-        },
-    },
-
-    watch: {
-        "sheetDataList.players"(val, oldVal) {
-            if (val.length > oldVal.length) {
-                this.playerIconStyles.push(this.generateIconStyle());
-            } else {
-                this.playerIconStyles.pop();
-            }
-        },
-    },
-    created() {
-        this.sheetDataList.players.forEach((player) => {
-            if (!player.photoURL) {
-                this.playerIconStyles.push({
-                    style: this.generateIconStyle(),
-                    playerEmail: player.email,
-                });
-            }
-        });
     },
 };
 </script>
@@ -298,13 +240,5 @@ export default {
 }
 .row-in-party {
     background-color: rgb(120, 250, 137) !important;
-}
-.profile-letters {
-    position: absolute;
-    top: 4px;
-    right: 5px;
-    text-transform: uppercase;
-    font-weight: bold;
-    color: white;
 }
 </style>

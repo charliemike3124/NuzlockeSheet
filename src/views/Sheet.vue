@@ -26,7 +26,11 @@
 
             <v-spacer></v-spacer>
 
-            <v-btn v-if="!userIsSignedIn" :loading="isSigningIn" @click="onSignInClick">
+            <v-btn
+                v-if="!userIsSignedIn && !loadingData"
+                :loading="isSigningIn"
+                @click="onSignInClick"
+            >
                 Sign In
             </v-btn>
         </v-toolbar>
@@ -45,14 +49,14 @@
                 <v-btn text @click="showAlert = false">Okay</v-btn>
             </div>
         </v-alert>
-        <div class="table-cont mb-12">
+        <div class="table-cont mb-12" v-if="!loadingData">
             <NuzlockeTable
-                v-if="!loadingData"
                 ref="nuzlockeTable"
                 @showSnackbar="showSnackbar"
                 @managePlayers="onManagePlayersClick"
-            ></NuzlockeTable>
+            />
         </div>
+        <CVSpinner v-if="loadingData" color="primary"><span>Loading data...</span></CVSpinner>
 
         <!-- Modal -->
         <v-dialog v-model="dialog.show" width="600">
@@ -96,7 +100,8 @@
 
 <script>
 import { NuzlockeTable, PlayersTable } from "@/components";
-import { PokemonGens, Constants } from "@/resources/constants";
+import { CVSpinner } from "@/components/common";
+import { Constants } from "@/resources/constants";
 import { mapActions, mapMutations, mapState } from "vuex";
 import FirebaseAuth from "@/services/FirebaseAuth";
 import Database from "@/services/FirebaseDatabase";
@@ -107,6 +112,7 @@ export default {
     components: {
         NuzlockeTable,
         PlayersTable,
+        CVSpinner,
     },
 
     computed: {
