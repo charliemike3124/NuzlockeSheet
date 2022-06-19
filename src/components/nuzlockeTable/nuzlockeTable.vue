@@ -40,7 +40,13 @@
                                 max-height="30"
                                 max-width="30"
                             >
-                                <span class="profile-letters">ha</span>
+                                <span class="profile-letters">
+                                    {{
+                                        player.name.length > 2
+                                            ? player.name.substring(0, 2)
+                                            : player.name
+                                    }}
+                                </span>
                             </div>
                         </span>
                     </span>
