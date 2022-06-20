@@ -159,7 +159,7 @@
             <v-btn
                 class="ml-2"
                 icon
-                href="https://www.linkedin.com/in/cvillalobosgtz/"
+                href="https://www.linkedin.com/in/cvillalobosgtz/?locale=en_US"
                 target="_blank"
                 x-small
             >
