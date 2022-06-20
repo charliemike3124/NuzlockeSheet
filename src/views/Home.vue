@@ -1,19 +1,21 @@
 <template>
     <div class="main-cont grey lighten-5">
-        <div class="title-img-cont" data-aos="zoom-in">
-            <img :src="GeneralHelpers.requireImage('title.png')" />
+        <div class="title-img-cont text-center" data-aos="zoom-in">
+            <img :src="GeneralHelpers.requireImage('title.png')" alt="Nuzlocke Sheets logo" />
+            <div>
+                A real-time synced tracking tool for your
+                <br />
+                <strong>Nuzlocke</strong>
+                and
+                <strong>Soulink</strong>
+                runs !
+            </div>
         </div>
-        <v-card class="card" data-aos="zoom-in" data-aos-delay="300">
+        <v-card class="card" data-aos="zoom-in" data-aos-delay="400">
             <v-card-text class="card-body">
                 <v-scroll-x-reverse-transition>
                     <div v-show="cardView === VIEW_MAIN">
-                        <div class="mb-3">
-                            Keep track of your
-                            <strong>Nuzlockes</strong>
-                            and
-                            <strong>Soulinks</strong>
-                            !
-                        </div>
+                        <div class="mb-3">Create a sheet and share the link with your friends!</div>
                         <div v-if="currentUser">
                             <v-btn @click="setCardView(VIEW_CREATE_SHEET)">Create Sheet</v-btn>
                         </div>
@@ -42,7 +44,11 @@
                             <div class="profile-pic">
                                 Signed in as:
                                 <br />
-                                <img :src="currentUser.photoURL" crossorigin="" />
+                                <img
+                                    :src="currentUser.photoURL"
+                                    crossorigin=""
+                                    alt="User profile-pic"
+                                />
                                 <div>
                                     <strong>{{ currentUser.email }}</strong>
                                     <br />
@@ -228,7 +234,7 @@ export default {
                 nameRules: [(v) => !!v || "Enter a name!"],
                 pokemonGen: null,
                 pokemonGenRules: [(v) => !!v || "Select a game!"],
-                isPrivate: true,
+                isPrivate: false,
             },
             joinSheetForm: {
                 isValid: false,
@@ -271,7 +277,7 @@ export default {
                     ),
                 ],
                 this.createSheetForm.pokemonGen,
-                this.createSheetForm.isPrivate
+                this.createSheetForm.isPrivate,
             ]);
             this.$router.push({
                 name: "Sheet",
@@ -305,6 +311,7 @@ export default {
                     if (!!fromJoinSheetBtn) {
                         this.setCardView(this.VIEW_JOIN_SHEET);
                     }
+                    this.LoadUserPreferences();
                 }
             } else {
                 //Handle Sign Out
